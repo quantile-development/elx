@@ -19,9 +19,18 @@ class Singer:
 
     @property
     def is_installed(self) -> bool:
+        """
+        Check if the executable is installed.
+
+        Returns:
+            bool: True if the executable is installed, False otherwise.
+        """
         return shutil.which(self.executable) is not None
 
     def install(self) -> None:
+        """
+        Install the executable using pipx.
+        """
         install(
             venv_dir=None,
             package_name=self.executable,
@@ -36,6 +45,15 @@ class Singer:
         )
 
     def run(self, args: list) -> dict:
+        """
+        Run the executable with the given arguments.
+
+        Args:
+            args (list): The arguments to pass to the executable.
+
+        Returns:
+            dict: The JSON output of the executable.
+        """
         result = subprocess.Popen(
             [
                 self.executable,

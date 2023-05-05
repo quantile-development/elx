@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 pipx = "^1.2.0"
+smart-open = {version = "^6.3.0", extras = ["azure"]}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
