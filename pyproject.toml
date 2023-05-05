@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.10"
 pipx = "^1.2.0"
 smart-open = {version = "^6.3.0", extras = ["azure"]}
+python-dotenv = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

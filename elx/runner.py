@@ -1,13 +1,12 @@
 import json
 import logging
 from pathlib import Path
-from sre_parse import State
 import subprocess
-from time import sleep
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
 import tempfile
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,6 +18,7 @@ class Runner:
         target: Target,
         state_manager: StateManager = StateManager(),
     ):
+        load_dotenv()
         self.tap = tap
         self.target = target
         self.state_manager = state_manager
@@ -31,15 +31,11 @@ class Runner:
         self.state_manager.save(self.state_file_name, state)
 
     def run(self) -> None:
-        logging.info(f"Running {self.tap.executable} to {self.target.executable}")
-
         if not self.tap.is_installed:
             self.tap.install()
 
         if not self.target.is_installed:
             self.target.install()
-
-        logging.info("Running ...")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tap_config_path = Path(tmpdir) / "tap_config.json"
@@ -114,5 +110,5 @@ if __name__ == "__main__":
             "destination_path": "/tmp",
         },
     )
-    runner = Runner(tap, target)
+    runner = Runner(tap, target, StateManager("azure://elx"))
     runner.run()

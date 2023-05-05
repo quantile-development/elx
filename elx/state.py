@@ -1,7 +1,18 @@
 from pathlib import Path
 import json
 from smart_open import open
+import os
 
+def transport_parameters(base_path: str = ".") -> dict:
+    if base_path.startswith("s3://"):
+        return {}
+    elif base_path.startswith("azure://"):
+        from azure.storage.blob import BlobServiceClient
+        return {
+            "client": BlobServiceClient.from_connection_string(os.environ["AZURE_STORAGE_CONNECTION_STRING"]),
+        }
+    else:
+        return {}
 
 class StateManager:
     def __init__(self, base_path: str = ".") -> None:
@@ -21,8 +32,12 @@ class StateManager:
         Returns:
             dict: The contents of the state file.
         """
-        with open(Path(self.base_path) / Path(state_file_name), "r") as state_file:
-            return json.load(state_file)
+        with open(
+            f"{self.base_path}/{state_file_name}", 
+            "r", 
+            transport_params=transport_parameters(self.base_path),
+        ) as state_file:
+            return json.loads(state_file.read())
 
     def save(self, state_file_name: str, state: dict = {}) -> None:
         """
@@ -31,11 +46,15 @@ class StateManager:
         Args:
             state_file_name (str): The name of the state file to save.
         """
-        with open(Path(self.base_path) / Path(state_file_name), "w+") as state_file:
-            json.dump(state, state_file)
+        with open(
+            f"{self.base_path}/{state_file_name}", 
+            "wb",
+            transport_params=transport_parameters(self.base_path),
+        ) as state_file:
+            state_file.write(json.dumps(state).encode("utf-8"))
 
 
 if __name__ == "__main__":
     state_manager = StateManager()
-    state_manager.save("state.json")
-    state_manager.load("state.json")
+    state_manager.save("state.json", {"foo": "bar"})
+    print(state_manager.load("state.json"))
