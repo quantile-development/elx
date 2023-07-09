@@ -10,6 +10,7 @@ class Stream(BaseModel):
     tap_stream_id: str
     replication_method: str
     key_properties: List[str]
+    # Schema is a reserved word in Pydantic.
     stream_schema: Schema = Field(alias="schema")
 
     @property

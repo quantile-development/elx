@@ -3,12 +3,28 @@ import shutil
 import subprocess
 import tempfile
 import hashlib
+import contextlib
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Generator, Optional
 from pipx.commands.install import install
 from pipx.commands.uninstall import uninstall
 from pipx.constants import LOCAL_BIN_DIR
+from elx.exceptions import DecodeException
+
+
+def require_install(func):
+    """
+    Decorator to check if the executable is installed.
+    """
+
+    def wrapper(self: "Singer", *args, **kwargs):
+        if not self.is_installed:
+            self.install()
+
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Singer:
@@ -64,16 +80,30 @@ class Singer:
             include_dependencies=False,
         )
 
-    @cached_property
-    def config_path(self) -> Path:
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            prefix=self.executable,
-            suffix="config.json",
-        ) as config_file:
-            config_file.write(json.dumps(self.config).encode())
-            return Path(config_file.name)
+    @contextlib.contextmanager
+    def configured(self) -> Generator[Path, None, None]:
+        """
+        Create a temporary config file with the config attribute as content.
 
+        Yields:
+            Path: The path to the temporary config file.
+        """
+        try:
+            # Use tempfile to create a temporary config file.
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                prefix=self.executable,
+                suffix="config.json",
+                delete=False,
+            ) as config_file:
+                # Write the config attribute to the config file.
+                config_file.write(json.dumps(self.config))
+                # Yield the path to the config file.
+            yield Path(config_file.name)
+        finally:
+            Path(config_file.name).unlink()
+
+    @require_install
     def run(self, args: list) -> dict:
         """
         Run the executable with the given arguments.
@@ -83,6 +113,9 @@ class Singer:
 
         Returns:
             dict: The JSON output of the executable.
+
+        Raises:
+            DecodeException: If the JSON output of the executable is not valid.
         """
         result = subprocess.Popen(
             [
@@ -94,4 +127,9 @@ class Singer:
         )
 
         stdout, stderr = result.communicate()
-        return json.loads(stdout)
+        try:
+            return json.loads(stdout)
+        except json.decoder.JSONDecodeError as e:
+            raise DecodeException(
+                f"Error parsing json: {e.msg} at position {e.pos} in {e.doc}"
+            )

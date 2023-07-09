@@ -3,16 +3,21 @@ import json
 from smart_open import open
 import os
 
-def transport_parameters(base_path: str = ".") -> dict:
+
+def transport_parameters(base_path) -> dict:
     if base_path.startswith("s3://"):
         return {}
     elif base_path.startswith("azure://"):
         from azure.storage.blob import BlobServiceClient
+
         return {
-            "client": BlobServiceClient.from_connection_string(os.environ["AZURE_STORAGE_CONNECTION_STRING"]),
+            "client": BlobServiceClient.from_connection_string(
+                os.environ["AZURE_STORAGE_CONNECTION_STRING"]
+            ),
         }
     else:
         return {}
+
 
 class StateManager:
     def __init__(self, base_path: str = ".") -> None:
@@ -33,8 +38,8 @@ class StateManager:
             dict: The contents of the state file.
         """
         with open(
-            f"{self.base_path}/{state_file_name}", 
-            "r", 
+            f"{self.base_path}/{state_file_name}",
+            "r",
             transport_params=transport_parameters(self.base_path),
         ) as state_file:
             return json.loads(state_file.read())
@@ -47,7 +52,7 @@ class StateManager:
             state_file_name (str): The name of the state file to save.
         """
         with open(
-            f"{self.base_path}/{state_file_name}", 
+            f"{self.base_path}/{state_file_name}",
             "wb",
             transport_params=transport_parameters(self.base_path),
         ) as state_file:

@@ -1,8 +1,8 @@
 import json
-from pathlib import Path
 import subprocess
 import pytest
 from elx.singer import Singer
+from elx.exceptions import DecodeException
 
 
 def pipx_uninstall(executable: str) -> None:
@@ -40,21 +40,29 @@ def test_singer_can_run(singer: Singer):
     """
     Test that the singer executable can run.
     """
-    # Install the executable if it is not installed.
-    if not singer.is_installed:
-        singer.install()
-
-    # Run the executable.
-    with pytest.raises(json.decoder.JSONDecodeError):
+    # Uninstall the singer executable if it is installed.
+    pipx_uninstall(singer.executable)
+    # Run the executable and make sure it installs.
+    with pytest.raises(DecodeException):
         singer.run(["--version"])
 
 
-def test_singer_config(singer: Singer):
+def test_singer_config_file(singer: Singer):
     """
-    Test that the content of the config file is
-    the same as the config attribute.
+    Test that the singer config file is created and deleted.
     """
-    # Open the config file and load the contents.
-    with open(singer.config_path, "r") as f:
-        config = json.load(f)
-        assert config == singer.config
+    # Create the config file.
+    with singer.configured() as config_path:
+        # Assert that the config file exists.
+        assert config_path.exists()
+        # Open the config file and check that the content is the same as the config attribute.
+        assert json.loads(config_path.read_text()) == singer.config
+    # Assert that the config file no longer exists.
+    assert not config_path.exists()
+
+
+def test_singer_hash_key(singer: Singer):
+    """
+    Make sure the hash key is a valid md5 hash.
+    """
+    assert len(singer.hash_key) == 32
