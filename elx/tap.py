@@ -1,11 +1,13 @@
-from functools import lru_cache
+from functools import cached_property
 import logging
 from pathlib import Path
 from elx.singer import Singer
+from elx.catalog import Catalog
 
 
 class Tap(Singer):
-    @lru_cache
-    def discover(self, config_path: Path) -> dict:
-        logging.info(f"Discovering {self.executable} with {config_path}")
-        return self.run(["--config", str(config_path), "--discover"])
+    @cached_property
+    def catalog(self) -> Catalog:
+        logging.info(f"Discovering {self.executable} with {self.config_path}")
+        catalog_dictionary = self.run(["--config", str(self.config_path), "--discover"])
+        return Catalog.parse_obj(catalog_dictionary)
