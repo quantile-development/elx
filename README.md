@@ -18,7 +18,7 @@ The most basic usage is as follows. Simply define the Tap and the Target and elx
 from elx import Runner, Tap, Target
 
 runner = Runner(
-  Tap("tap-carbon-intensity", "git+https://gitlab.com/meltano/tap-carbon-intensity.git"),
+  Tap("git+https://gitlab.com/meltano/tap-carbon-intensity.git"),
   Target("target-jsonl")
 )
 
