@@ -64,17 +64,17 @@ class Runner:
 
 if __name__ == "__main__":
     tap = Tap(
-        spec="git+https://github.com/MeltanoLabs/tap-csv.git",
-        executable="tap-csv",
-        config={
-            "files": [
-                {
-                    "entity": "test",
-                    "path": "./tests/test.csv",
-                    "keys": ["id"],
-                }
-            ]
-        },
+        spec="git+https://gitlab.com/meltano/tap-carbon-intensity.git",
+        # executable="tap-csv",
+        # config={
+        #     "files": [
+        #         {
+        #             "entity": "test",
+        #             "path": "./tests/test.csv",
+        #             "keys": ["id"],
+        #         }
+        #     ]
+        # },
     )
     target = Target(
         "target-jsonl",

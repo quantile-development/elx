@@ -32,7 +32,8 @@ class Tap(Singer):
             Catalog: The catalog as a Pydantic model.
         """
         with json_temp_file(self.config) as config_path:
-            return self.discover(config_path)
+            catalog = self.discover(config_path)
+            return catalog
             # return Catalog.parse_obj(catalog)
 
     @contextlib.contextmanager
