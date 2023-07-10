@@ -1,11 +1,9 @@
 import json
 import logging
-from pathlib import Path
 import subprocess
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
-import tempfile
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
@@ -27,88 +25,54 @@ class Runner:
     def state_file_name(self) -> str:
         return f"{self.tap.executable}-{self.target.executable}.json"
 
+    def load_state(self) -> dict:
+        return self.state_manager.load(self.state_file_name)
+
     def save_state(self, state: dict) -> None:
         self.state_manager.save(self.state_file_name, state)
 
     def run(self) -> None:
-        with self.tap.process() as tap_process:
+        state = self.load_state()
+
+        with self.tap.process(state=state) as tap_process:
             with self.target.process(tap_process=tap_process) as target_process:
-                for line in iter(tap_process.stderr.readline, b""):
+
+                def log_lines():
+                    yield from iter(tap_process.stderr.readline, b"")
+                    yield from iter(target_process.stderr.readline, b"")
+
+                for line in log_lines():
                     print(line.decode("utf-8"))
 
                 tap_process.stdout.close()
                 stdout, stderr = target_process.communicate()
 
-                logging.info(f"STDOUT: {stdout}")
-                logging.info(f"STDERR: {stderr}")
+                # If any of the processes exited with a non-zero exit code,
+                # raise an exception.
+                if tap_process.returncode and tap_process.returncode != 0:
+                    raise subprocess.CalledProcessError(
+                        tap_process.returncode, tap_process.args
+                    )
+                if target_process.returncode and target_process.returncode != 0:
+                    raise subprocess.CalledProcessError(
+                        target_process.returncode, target_process.args
+                    )
 
                 state = json.loads(stdout.decode("utf-8"))
                 self.save_state(state)
 
-        # with tempfile.TemporaryDirectory() as tmpdir:
-        #     tap_config_path = Path(tmpdir) / "tap_config.json"
-        #     with open(tap_config_path, "w") as f:
-        #         json.dump(self.tap.config, f)
-
-        #     catalog = self.tap.discover(tap_config_path)
-        #     catalog_path = Path(tmpdir) / "catalog.json"
-        #     with open(catalog_path, "w") as f:
-        #         json.dump(catalog, f)
-
-        #     target_config_path = Path(tmpdir) / "target_config.json"
-        #     with open(target_config_path, "w") as f:
-        #         json.dump(self.target.config, f)
-
-        #     tap_process = subprocess.Popen(
-        #         [
-        #             self.tap.executable,
-        #             "--config",
-        #             str(tap_config_path),
-        #             "--catalog",
-        #             str(catalog_path),
-        #         ],
-        #         stdout=subprocess.PIPE,
-        #         stderr=subprocess.PIPE,
-        #     )
-
-        #     for line in iter(tap_process.stderr.readline, b""):
-        #         print(line.decode("utf-8"))
-
-        #     target_process = subprocess.Popen(
-        #         [
-        #             self.target.executable,
-        #             "--config",
-        #             str(target_config_path),
-        #         ],
-        #         stdin=tap_process.stdout,
-        #         stdout=subprocess.PIPE,
-        #         stderr=subprocess.PIPE,
-        #     )
-
-        #     tap_process.stdout.close()
-        #     stdout, stderr = target_process.communicate()
-
-        #     logging.info(f"STDOUT: {stdout}")
-        #     logging.info(f"STDERR: {stderr}")
-
-        # state = json.loads(stdout.decode("utf-8"))
-        # self.save_state(state)
-
 
 if __name__ == "__main__":
     tap = Tap(
-        "tap-smoke-test",
-        "git+https://github.com/meltano/tap-smoke-test.git",
+        spec="git+https://github.com/MeltanoLabs/tap-csv.git",
+        executable="tap-csv",
         config={
-            "streams": [
+            "files": [
                 {
-                    "stream_name": "users",
-                    "input_filename": "https://gitlab.com/meltano/tap-smoke-test/-/raw/main/demo-data/animals-data.jsonl",
-                },
-                {
-                    "stream_name": "computers",
-                    "input_filename": "https://gitlab.com/meltano/tap-smoke-test/-/raw/main/demo-data/animals-data.jsonl",
-                },
+                    "entity": "test",
+                    "path": "./tests/test.csv",
+                    "keys": ["id"],
+                }
             ]
         },
     )
@@ -116,6 +80,7 @@ if __name__ == "__main__":
         "target-jsonl",
         config={
             "destination_path": "/tmp",
+            "do_timestamp_file": "false",
         },
     )
     runner = Runner(

@@ -3,6 +3,7 @@ import subprocess
 import pytest
 from elx.singer import Singer
 from elx.exceptions import DecodeException
+from elx.json_temp_file import json_temp_file
 
 
 def pipx_uninstall(executable: str) -> None:
@@ -20,6 +21,13 @@ def pipx_uninstall(executable: str) -> None:
         ],
         check=False,
     )
+
+
+def test_singer_can_discover_executable(singer: Singer):
+    """
+    Test that the singer executable can be discovered.
+    """
+    assert singer.executable == "tap-smoke-test"
 
 
 def test_singer_can_install(singer: Singer):
@@ -52,7 +60,7 @@ def test_singer_config_file(singer: Singer):
     Test that the singer config file is created and deleted.
     """
     # Create the config file.
-    with singer.configured() as config_path:
+    with json_temp_file(singer.config) as config_path:
         # Assert that the config file exists.
         assert config_path.exists()
         # Open the config file and check that the content is the same as the config attribute.

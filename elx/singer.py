@@ -1,16 +1,17 @@
 import json
+import logging
 import shutil
 import subprocess
-import tempfile
 import hashlib
-import contextlib
 from functools import cached_property
-from pathlib import Path
 from typing import Generator, Optional
 from pipx.commands.install import install
 from pipx.commands.uninstall import uninstall
+from pipx.commands.common import package_name_from_spec
 from pipx.constants import LOCAL_BIN_DIR
 from elx.exceptions import DecodeException
+
+PYTHON = "python3"
 
 
 def require_install(func):
@@ -30,13 +31,28 @@ def require_install(func):
 class Singer:
     def __init__(
         self,
-        executable: str,
-        spec: Optional[str] = None,
+        spec: str,
+        executable: Optional[str] = None,
         config: dict = {},
     ):
-        self.executable = executable
         self.spec = spec
+        self._executable = executable
         self.config = config
+
+    @cached_property
+    def executable(self) -> str:
+        """
+        Get the package name for this plugin.
+        """
+        if self._executable:
+            return self._executable
+
+        return package_name_from_spec(
+            package_spec=self.spec,
+            python=PYTHON,
+            pip_args=[],
+            verbose=False,
+        )
 
     @cached_property
     def hash_key(self) -> str:
@@ -80,29 +96,6 @@ class Singer:
             include_dependencies=False,
         )
 
-    @contextlib.contextmanager
-    def configured(self) -> Generator[Path, None, None]:
-        """
-        Create a temporary config file with the config attribute as content.
-
-        Yields:
-            Path: The path to the temporary config file.
-        """
-        try:
-            # Use tempfile to create a temporary config file.
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                prefix=self.executable,
-                suffix="config.json",
-                delete=False,
-            ) as config_file:
-                # Write the config attribute to the config file.
-                config_file.write(json.dumps(self.config))
-                # Yield the path to the config file.
-            yield Path(config_file.name)
-        finally:
-            Path(config_file.name).unlink()
-
     @require_install
     def run(self, args: list) -> dict:
         """
@@ -127,9 +120,16 @@ class Singer:
         )
 
         stdout, stderr = result.communicate()
+
+        # If any of the processes exited with a non-zero exit code,
+        # raise an exception.
+        if result.returncode != 0:
+            raise DecodeException(f"Error running {self.executable}: {stderr.decode()}")
+
+        # Else try to parse the JSON output.
         try:
             return json.loads(stdout)
         except json.decoder.JSONDecodeError as e:
             raise DecodeException(
-                f"Error parsing json: {e.msg} at position {e.pos} in {e.doc}"
+                f"Error parsing json: {e.msg} at position {e.pos} in {e.doc} \n\n {stderr.decode()}"
             )
