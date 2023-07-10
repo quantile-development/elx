@@ -9,7 +9,7 @@ def singer() -> Generator[Singer, None, None]:
     Return a Singer instance for the tap-smoke-test executable.
     """
     yield Singer(
-        executable="tap-smoke-test",
+        # executable="tap-smoke-test",
         spec="git+https://github.com/meltano/tap-smoke-test.git",
         config={
             "streams": [

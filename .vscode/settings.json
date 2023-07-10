@@ -10,5 +10,14 @@
   "python.isort.path": "isort",
   "python.analysis.errors": {
     "reportUnboundVariable": "none"
-  }
+  },
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "DuckDB",
+      "name": "test",
+      "database": "${workspaceFolder:elx}/duckdb.db"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
 }

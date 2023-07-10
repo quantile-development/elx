@@ -37,6 +37,9 @@ class StateManager:
         Returns:
             dict: The contents of the state file.
         """
+        if not Path(f"{self.base_path}/{state_file_name}").exists():
+            return {}
+
         with open(
             f"{self.base_path}/{state_file_name}",
             "r",
@@ -57,9 +60,3 @@ class StateManager:
             transport_params=transport_parameters(self.base_path),
         ) as state_file:
             state_file.write(json.dumps(state).encode("utf-8"))
-
-
-if __name__ == "__main__":
-    state_manager = StateManager()
-    state_manager.save("state.json", {"foo": "bar"})
-    print(state_manager.load("state.json"))
