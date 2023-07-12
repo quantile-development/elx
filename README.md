@@ -12,7 +12,7 @@ A lightweight Python interface for extracting and loading using the Singer.io sp
 ## Installation
 
 ```bash
-pip install elx
+pip install elx --pre
 ```
 
 ## Usage
