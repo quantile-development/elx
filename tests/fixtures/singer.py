@@ -3,13 +3,14 @@ import pytest
 from elx.singer import Singer
 
 
-@pytest.fixture
-def singer() -> Generator[Singer, None, None]:
+@pytest.fixture(params=["tap-smoke-test", None])
+def singer(request) -> Generator[Singer, None, None]:
     """
     Return a Singer instance for the tap-smoke-test executable.
     """
     yield Singer(
-        # executable="tap-smoke-test",
+        # Test with and without an executable.
+        executable=request.param,
         spec="git+https://github.com/meltano/tap-smoke-test.git",
         config={
             "streams": [
