@@ -1,0 +1,7 @@
+elx_with_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /tmp/db.duckdb
+      schema: dbt

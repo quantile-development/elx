@@ -17,6 +17,7 @@ def load_assets(runner: Runner) -> List[AssetsDefinition]:
             name=dagster_safe_name(stream.name),
             description=generate_description(runner=runner, stream=stream),
             group_name=dagster_safe_name(runner.tap.executable),
+            compute_kind="python",
         )(run_factory(runner, stream))
         for stream 
         in runner.tap.streams

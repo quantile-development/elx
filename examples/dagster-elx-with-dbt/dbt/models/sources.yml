@@ -1,0 +1,7 @@
+sources:
+  - name: source
+    meta:
+      external_location: "/tmp/{name}*.parquet"
+    tables:
+      - name: stream-one
+      - name: stream-two

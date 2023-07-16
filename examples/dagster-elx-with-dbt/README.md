@@ -13,5 +13,5 @@ poetry install
 Then, start Dagit:
 
 ```shell
-poetry run dagster dev -m dagster_elx_with_dbt
+poetry run dagster dev -m pipeline
 ```

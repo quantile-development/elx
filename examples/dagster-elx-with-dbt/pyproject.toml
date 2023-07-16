@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Jules Huisman <jules.huisman@quantile.nl>"]
 readme = "README.md"
-packages = [{include = "dagster_elx_with_dbt"}]
+packages = [{include = "pipeline"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
