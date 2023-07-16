@@ -1,7 +1,7 @@
 sources:
-  - name: source
+  - name: tap_smoke_test
     meta:
       external_location: "/tmp/{name}*.parquet"
     tables:
-      - name: stream-one
-      - name: stream-two
+      - name: stream_one
+      - name: stream_two

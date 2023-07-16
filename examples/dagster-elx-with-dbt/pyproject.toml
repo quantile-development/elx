@@ -12,8 +12,9 @@ dagster = "^1.3.14"
 dagster-dbt = "^0.19.14"
 dbt-duckdb = "^1.5.2"
 pyarrow = "^12.0.1"
-elx = { path = "../..", develop = true }
 dagster-webserver = "^1.3.14"
+dagster-duckdb-pandas = "^0.19.14"
+elx = { path = "../..", develop = true }
 
 
 [build-system]
