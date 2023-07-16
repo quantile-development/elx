@@ -34,8 +34,10 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
             return catalog
-        
-    def filtered_catalog(self, catalog: dict, selected_stream: Optional[str] = None) -> dict:
+
+    def filtered_catalog(
+        self, catalog: dict, selected_stream: Optional[str] = None
+    ) -> dict:
         """
         Filter the catalog.
 
@@ -51,17 +53,25 @@ class Tap(Singer):
             return {
                 "streams": [
                     {
-                        **stream, 
+                        **stream,
                         "selected": stream["tap_stream_id"] == selected_stream,
-                        "metadata": stream["metadata"] + [{"metadata": {"selected": stream["tap_stream_id"] == selected_stream}, "breadcrumb": []}]
+                        "metadata": stream["metadata"]
+                        + [
+                            {
+                                "metadata": {
+                                    "selected": stream["tap_stream_id"]
+                                    == selected_stream
+                                },
+                                "breadcrumb": [],
+                            }
+                        ],
                     }
-                    for stream 
-                    in catalog["streams"]
+                    for stream in catalog["streams"]
                 ]
             }
-        
+
         return catalog
-        
+
     @property
     def streams(self) -> list[Stream]:
         """
@@ -85,9 +95,7 @@ class Tap(Singer):
         Returns:
             Popen: The tap process.
         """
-        print(stream)
         catalog = self.filtered_catalog(self.catalog, selected_stream=stream)
-        print(catalog)
 
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog) as catalog_path:
