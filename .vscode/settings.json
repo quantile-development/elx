@@ -19,5 +19,16 @@
       "database": "${workspaceFolder:elx}/duckdb.db"
     }
   ],
-  "sqltools.useNodeRuntime": true
+  "sqltools.useNodeRuntime": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.venv": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true
+  }
 }

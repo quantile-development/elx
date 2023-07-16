@@ -1,6 +1,7 @@
 import json
 import logging
 import subprocess
+from typing import Optional
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
@@ -31,10 +32,10 @@ class Runner:
     def save_state(self, state: dict) -> None:
         self.state_manager.save(self.state_file_name, state)
 
-    def run(self) -> None:
+    def run(self, stream: Optional[str] = None) -> None:
         state = self.load_state()
 
-        with self.tap.process(state=state) as tap_process:
+        with self.tap.process(state=state, stream=stream) as tap_process:
             with self.target.process(tap_process=tap_process) as target_process:
 
                 def log_lines():
@@ -64,28 +65,27 @@ class Runner:
 
 if __name__ == "__main__":
     tap = Tap(
-        spec="git+https://gitlab.com/meltano/tap-carbon-intensity.git",
-        # executable="tap-csv",
-        # config={
-        #     "files": [
-        #         {
-        #             "entity": "test",
-        #             "path": "./tests/test.csv",
-        #             "keys": ["id"],
-        #         }
-        #     ]
-        # },
-    )
-    target = Target(
-        "target-jsonl",
+        executable="tap-smoke-test",
+        spec="git+https://github.com/meltano/tap-smoke-test.git",
         config={
-            "destination_path": "/tmp",
-            "do_timestamp_file": "false",
+            "streams": [
+                {
+                    "stream_name": "stream-one",
+                    "input_filename": "https://gitlab.com/meltano/tap-smoke-test/-/raw/main/demo-data/animals-data.jsonl",
+                },
+                {
+                    "stream_name": "stream-two",
+                    "input_filename": "https://gitlab.com/meltano/tap-smoke-test/-/raw/main/demo-data/animals-data.jsonl",
+                },
+            ],
         },
     )
-    runner = Runner(
-        tap,
-        target,
-        # StateManager("azure://elx"),
+    target = Target(
+        spec="git+https://github.com/estrategiahq/target-parquet.git",
+        executable="target-parquet",
+        config={
+            "destination_path": "/tmp",
+        },
     )
-    runner.run()
+    runner = Runner(tap, target, StateManager("/tmp"))
+    runner.run("stream-one")

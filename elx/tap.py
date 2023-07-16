@@ -2,9 +2,9 @@ import logging
 import contextlib
 from functools import cached_property
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Generator, List, Optional
 from elx.singer import Singer, require_install
-from elx.catalog import Catalog
+from elx.catalog import Stream
 from elx.json_temp_file import json_temp_file
 from subprocess import Popen, PIPE
 
@@ -34,13 +34,50 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
             return catalog
-            # return Catalog.parse_obj(catalog)
+        
+    def filtered_catalog(self, catalog: dict, selected_stream: Optional[str] = None) -> dict:
+        """
+        Filter the catalog.
+
+        Args:
+            catalog (dict): The catalog.
+            stream (Optional[str], optional): The stream to filter on. Defaults to None.
+
+        Returns:
+            dict: The filtered catalog.
+        """
+        # TODO: Abstract this away.
+        if selected_stream:
+            return {
+                "streams": [
+                    {
+                        **stream, 
+                        "selected": stream["tap_stream_id"] == selected_stream,
+                        "metadata": stream["metadata"] + [{"metadata": {"selected": stream["tap_stream_id"] == selected_stream}, "breadcrumb": []}]
+                    }
+                    for stream 
+                    in catalog["streams"]
+                ]
+            }
+        
+        return catalog
+        
+    @property
+    def streams(self) -> list[Stream]:
+        """
+        Get the streams from the catalog.
+
+        Returns:
+            list[Stream]: The streams.
+        """
+        return [Stream(**stream) for stream in self.catalog["streams"]]
 
     @contextlib.contextmanager
     @require_install
     def process(
         self,
         state: dict = {},
+        stream: Optional[str] = None,
     ) -> Generator[Popen, None, None]:
         """
         Run the tap process.
@@ -48,10 +85,12 @@ class Tap(Singer):
         Returns:
             Popen: The tap process.
         """
-        logging.debug(f"Using state: {state}")
+        print(stream)
+        catalog = self.filtered_catalog(self.catalog, selected_stream=stream)
+        print(catalog)
 
         with json_temp_file(self.config) as config_path:
-            with json_temp_file(self.catalog) as catalog_path:
+            with json_temp_file(catalog) as catalog_path:
                 with json_temp_file(state) as state_path:
                     yield Popen(
                         [
