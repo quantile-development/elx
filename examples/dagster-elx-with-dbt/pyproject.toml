@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "dagster-elx-with-dbt"
+version = "0.1.0"
+description = ""
+authors = ["Jules Huisman <jules.huisman@quantile.nl>"]
+readme = "README.md"
+packages = [{include = "dagster_elx_with_dbt"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+dagster = "^1.3.14"
+dagster-dbt = "^0.19.14"
+dbt-duckdb = "^1.5.2"
+pyarrow = "^12.0.1"
+elx = { path = "../..", develop = true }
+dagster-webserver = "^1.3.14"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

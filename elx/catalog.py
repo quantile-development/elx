@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -8,9 +8,8 @@ class Schema(BaseModel):
 
 class Stream(BaseModel):
     tap_stream_id: str
-    replication_method: str
+    replication_method: Optional[str] = "FULL_REFRESH"
     key_properties: List[str]
-    # Schema is a reserved word in Pydantic.
     stream_schema: Schema = Field(alias="schema")
 
     @property
@@ -20,7 +19,3 @@ class Stream(BaseModel):
     @property
     def safe_name(self) -> str:
         return self.name.replace("-", "_")
-
-
-class Catalog(BaseModel):
-    streams: List[Stream]

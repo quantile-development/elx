@@ -1,6 +1,6 @@
 from subprocess import Popen
 from elx import Tap
-from elx.catalog import Catalog
+from elx.catalog import Stream
 
 
 def test_tap_discovery(tap: Tap):
@@ -22,3 +22,15 @@ def test_tap_process(tap: Tap):
         assert type(process) == Popen
         # Make sure the tap process is running.
         assert process.poll() is None
+
+
+def test_tap_streams(tap: Tap):
+    """
+    Test that the tap streams can be retrieved.
+    """
+    # Make sure the streams are of the right type.
+    assert type(tap.streams) == list
+    # Make sure the streams have the right number of streams.
+    assert len(tap.streams) == 1
+    # Make sure the streams are of the right type.
+    assert type(tap.streams[0]) == Stream

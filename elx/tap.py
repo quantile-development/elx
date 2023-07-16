@@ -4,7 +4,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Generator, Optional
 from elx.singer import Singer, require_install
-from elx.catalog import Catalog
+from elx.catalog import Stream
 from elx.json_temp_file import json_temp_file
 from subprocess import Popen, PIPE
 
@@ -34,7 +34,16 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
             return catalog
-            # return Catalog.parse_obj(catalog)
+        
+    @property
+    def streams(self) -> list[Stream]:
+        """
+        Get the streams from the catalog.
+
+        Returns:
+            list[Stream]: The streams.
+        """
+        return [Stream(**stream) for stream in self.catalog["streams"]]
 
     @contextlib.contextmanager
     @require_install
