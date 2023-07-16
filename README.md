@@ -7,8 +7,11 @@ A lightweight Python interface for extracting and loading using the Singer.io sp
 ⚡ Lazy install of Singer.io taps and targets \
 ⚡ Stream parallelism for high performance \
 ⚡ Remote state management \
-⚡ Tap catalog is available in Python for metadata purposes \
-⚡ Native integration with Dagster
+⚡ Tap catalog is available in Python for metadata purposes
+
+🔗 Native integration with Dagster \
+🔗 Native integration with Airflow (todo) \
+🔗 Native integration with Prefect (todo)
 
 ## Installation
 
