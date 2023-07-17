@@ -1,8 +1,8 @@
 import json
 import logging
-import shutil
 import subprocess
 import hashlib
+from distutils.spawn import find_executable
 from functools import cached_property
 from typing import Generator, Optional
 from pipx.commands.install import install
@@ -77,7 +77,7 @@ class Singer:
         Returns:
             bool: True if the executable is installed, False otherwise.
         """
-        return shutil.which(self.executable) is not None
+        return find_executable(self.executable) is not None
 
     def install(self) -> None:
         """
@@ -91,6 +91,7 @@ class Singer:
                     "pipx",
                     "install",
                     self.spec or self.executable,
+                    "--force",
                 ],
                 capture_output=True,
                 check=True,
