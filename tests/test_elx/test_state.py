@@ -1,3 +1,4 @@
+from anyio import Path
 from click import File
 import pytest
 from pytest import MonkeyPatch
@@ -39,3 +40,17 @@ def test_transport_parameters_gcs_token(monkeypatch: MonkeyPatch):
         gcs_state_client = state_client_factory("gs://bucket/path")
         assert "client" in gcs_state_client.params
         assert type(gcs_state_client.params["client"]) == Client
+
+
+def test_state_save(state_manager: StateManager):
+    """
+    Test that state is saved to the correct path.
+    """
+    state_manager.save("test.json", {"foo": "bar"})
+    assert Path(state_manager.base_path, "test.json").exists()
+
+
+def test_state_merge(state_manager: StateManager):
+    state_manager.save("test.json", {"foo": "bar"})
+    state_manager.save("test.json", {"bar": "foo"})
+    assert state_manager.load("test.json") == {"foo": "bar", "bar": "foo"}
