@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import subprocess
-from typing import Optional
+from typing import List, Optional
 
 from functools import cached_property
 from elx.tap import Tap
@@ -56,10 +56,14 @@ class Runner:
             "TARGET_NAME": self.target.executable.replace("-", "_"),
         }
 
-    def run(self, stream: Optional[str] = None) -> None:
+    def run(
+        self,
+        streams: Optional[List[str]] = None,
+        logger: logging.Logger = None,
+    ) -> None:
         state = self.load_state()
 
-        with self.tap.process(state=state, stream=stream) as tap_process:
+        with self.tap.process(state=state, streams=streams) as tap_process:
             with self.target.process(tap_process=tap_process) as target_process:
 
                 def log_lines():
@@ -68,6 +72,8 @@ class Runner:
 
                 for line in log_lines():
                     print(line.decode("utf-8"))
+                    if logger:
+                        logger.info(line.decode("utf-8"))
 
                 tap_process.stdout.close()
                 stdout, stderr = target_process.communicate()
