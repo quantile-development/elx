@@ -10,22 +10,9 @@ from pipx.commands.uninstall import uninstall
 from pipx.commands.common import package_name_from_spec
 from pipx.constants import LOCAL_BIN_DIR
 from elx.exceptions import DecodeException, PipxInstallException
+from elx.utils import require_install, interpolate_in_config
 
 PYTHON = "python3"
-
-
-def require_install(func):
-    """
-    Decorator to check if the executable is installed.
-    """
-
-    def wrapper(self: "Singer", *args, **kwargs):
-        if not self.is_installed:
-            self.install()
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
 
 
 class Singer:
@@ -37,7 +24,27 @@ class Singer:
     ):
         self.spec = spec
         self._executable = executable
-        self.config = config
+        self._config = config
+
+    @property
+    def config(self) -> dict:
+        """
+        Get the config for this plugin.
+        """
+        config = self._config
+
+        # If the config is a callable, call it and return the result.
+        if callable(self._config):
+            config = self._config()
+
+        # If there is a runner attribute, interpolate the config.
+        if hasattr(self, "runner"):
+            config = interpolate_in_config(
+                config=config,
+                interpolation=self.runner.interpolation_values,
+            )
+
+        return config
 
     @cached_property
     def executable(self) -> str:

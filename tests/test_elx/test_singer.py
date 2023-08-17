@@ -1,6 +1,7 @@
 import json
 import subprocess
 import pytest
+from elx.runner import Runner
 from elx.singer import Singer
 from elx.exceptions import DecodeException
 from elx.json_temp_file import json_temp_file
@@ -74,3 +75,36 @@ def test_singer_hash_key(singer: Singer):
     Make sure the hash key is a valid md5 hash.
     """
     assert len(singer.hash_key) == 32
+
+
+def test_singer_dynamic_config():
+    """
+    Make sure the Singer instance is able to handle dynamic config.
+    """
+
+    singer = Singer(
+        executable="tap-smoke-test",
+        spec="git+https://github.com/meltano/tap-smoke-test.git",
+        config=lambda: {},
+    )
+
+    assert singer.config == {}
+
+
+def test_singer_config_interpolation(runner: Runner):
+    """
+    Make sure the Singer instance is able to handle config interpolation.
+    """
+
+    singer = Singer(
+        executable="tap-smoke-test",
+        spec="git+https://github.com/meltano/tap-smoke-test.git",
+        config={
+            "target_schema": "{TAP_NAME}",
+        },
+    )
+
+    # Attach the runner
+    singer.runner = runner
+
+    assert singer.config == {"target_schema": "tap_smoke_test"}
