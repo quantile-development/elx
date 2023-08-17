@@ -82,3 +82,27 @@ Supported paths include:
 | `/tmp/my-folder`                                       | `None`                                                 | `None`       |
 | `(ssh\|scp\|sftp)://username@host//my-folder`          | `None`                                                 | `None`       |
 | `(ssh\|scp\|sftp)://username:password@host//my-folder` | `None`                                                 | `None`       |
+
+### Config injection
+There are certain variables that are available to inject in the tap or target config. One common use case is to place the tap data in a schema with the tap name.
+
+```python
+target = Target(
+  "target-bar",
+  config={
+    "default_target_schema": "{TAP_NAME}"
+  }
+)
+```
+
+Supported variables:
+
+| Variable            | Example                      |
+| ------------------- | ---------------------------- |
+| `NOW`               | `2023-08-17T11:06:54.233086` |
+| `YESTERDAY`         | `2023-08-16T11:06:54.233086` |
+| `LAST_WEEK`         | `2023-08-10T11:06:54.233086` |
+| `TAP_EXECUTABLE`    | `tap-smoke-test`             |
+| `TAP_NAME`          | `tap_smoke_test`             |
+| `TARGET_EXECUTABLE` | `target-postgres`            |
+| `TARGET_NAME`       | `target_postgres`            |
