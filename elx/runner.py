@@ -1,7 +1,10 @@
+import datetime
 import json
 import logging
 import subprocess
 from typing import Optional
+
+from functools import cached_property
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
@@ -22,6 +25,10 @@ class Runner:
         self.target = target
         self.state_manager = state_manager
 
+        # Give the tap and target access to the runner.
+        self.tap.runner = self
+        self.target.runner = self
+
     @property
     def state_file_name(self) -> str:
         return f"{self.tap.executable}-{self.target.executable}.json"
@@ -31,6 +38,23 @@ class Runner:
 
     def save_state(self, state: dict) -> None:
         self.state_manager.save(self.state_file_name, state)
+
+    @cached_property
+    def interpolation_values(self) -> dict:
+        """
+        Values that can be used in the config of the tap or target.
+        """
+        NOW = datetime.datetime.now()
+
+        return {
+            "NOW": NOW.isoformat(),
+            "YESTERDAY": (NOW - datetime.timedelta(days=1)).isoformat(),
+            "LAST_WEEK": (NOW - datetime.timedelta(days=7)).isoformat(),
+            "TAP_EXECUTABLE": self.tap.executable,
+            "TAP_NAME": self.tap.executable.replace("-", "_"),
+            "TARGET_EXECUTABLE": self.target.executable,
+            "TARGET_NAME": self.target.executable.replace("-", "_"),
+        }
 
     def run(self, stream: Optional[str] = None) -> None:
         state = self.load_state()

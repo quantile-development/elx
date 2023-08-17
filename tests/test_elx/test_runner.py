@@ -16,3 +16,11 @@ def test_extract_load(runner: Runner):
     # Assert that the state file was created
     state_file = Path(runner.state_manager.base_path).glob("*.json")
     assert len(list(state_file)) == 1
+
+
+def test_config_interpolation_values(runner: Runner):
+    """
+    Make sure the tap and target names are correct.
+    """
+    assert runner.interpolation_values["TAP_EXECUTABLE"] == "tap-smoke-test"
+    assert runner.interpolation_values["TARGET_EXECUTABLE"] == "target-jsonl"
