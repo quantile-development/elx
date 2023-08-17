@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elx"
-version = "0.1.0a4"
+version = "0.1.0a5"
 description = "A lightweight Python interface for extracting and loading using the Singer.io spec."
 authors = ["Jules Huisman <jules.huisman@quantile.nl>"]
 readme = "README.md"
