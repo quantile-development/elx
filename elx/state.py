@@ -140,9 +140,14 @@ class StateManager:
         Args:
             state_file_name (str): The name of the state file to save.
         """
+        # We first merge with any existing state to ensure that we don't overwrite
+        existing_state = self.load(state_file_name)
+        merged_state = {**existing_state, **state}
+
+        # Then we write the merged state to the state file
         with open(
             f"{self.base_path}/{state_file_name}",
             "wb",
             transport_params=self.state_client.params,
         ) as state_file:
-            state_file.write(json.dumps(state).encode("utf-8"))
+            state_file.write(json.dumps(merged_state).encode("utf-8"))
