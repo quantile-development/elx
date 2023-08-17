@@ -36,41 +36,39 @@ class Tap(Singer):
             return catalog
 
     def filtered_catalog(
-        self, catalog: dict, selected_stream: Optional[str] = None
+        self, catalog: dict, streams: Optional[List[str]] = None
     ) -> dict:
         """
         Filter the catalog.
 
         Args:
             catalog (dict): The catalog.
-            stream (Optional[str], optional): The stream to filter on. Defaults to None.
+            streams (Optional[List[str]], optional): The streams to filter on. Defaults to None.
 
         Returns:
             dict: The filtered catalog.
         """
-        # TODO: Abstract this away.
-        if selected_stream:
-            return {
-                "streams": [
-                    {
-                        **stream,
-                        "selected": stream["tap_stream_id"] == selected_stream,
-                        "metadata": stream["metadata"]
-                        + [
-                            {
-                                "metadata": {
-                                    "selected": stream["tap_stream_id"]
-                                    == selected_stream
-                                },
-                                "breadcrumb": [],
-                            }
-                        ],
-                    }
-                    for stream in catalog["streams"]
-                ]
-            }
+        if not streams:
+            return catalog
 
-        return catalog
+        return {
+            "streams": [
+                {
+                    **stream,
+                    "selected": stream["tap_stream_id"] in streams,
+                    "metadata": stream["metadata"]
+                    + [
+                        {
+                            "metadata": {
+                                "selected": stream["tap_stream_id"] in streams,
+                            },
+                            "breadcrumb": [],
+                        }
+                    ],
+                }
+                for stream in catalog["streams"]
+            ]
+        }
 
     @property
     def streams(self) -> list[Stream]:
@@ -87,7 +85,7 @@ class Tap(Singer):
     def process(
         self,
         state: dict = {},
-        stream: Optional[str] = None,
+        streams: Optional[List[str]] = None,
     ) -> Generator[Popen, None, None]:
         """
         Run the tap process.
@@ -95,7 +93,7 @@ class Tap(Singer):
         Returns:
             Popen: The tap process.
         """
-        catalog = self.filtered_catalog(self.catalog, selected_stream=stream)
+        catalog = self.filtered_catalog(catalog=self.catalog, streams=streams)
 
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog) as catalog_path:
