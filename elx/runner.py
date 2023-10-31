@@ -66,31 +66,35 @@ class Runner:
         with self.tap.process(state=state, streams=streams) as tap_process:
             with self.target.process(tap_process=tap_process) as target_process:
 
-                def log_lines():
-                    yield from iter(tap_process.stderr.readline, b"")
-                    yield from iter(target_process.stderr.readline, b"")
+                
 
-                for line in log_lines():
-                    print(line.decode("utf-8"))
-                    if logger:
-                        logger.info(line.decode("utf-8"))
+                # def log_lines():
+                #     yield from iter(tap_process.stderr.readline, b"")
+                #     yield from iter(tap_process.stdout.readline, b"")
+                #     yield from iter(target_process.stderr.readline, b"")
+                #     yield from iter(target_process.stdout.readline, b"")
 
-                tap_process.stdout.close()
-                stdout, stderr = target_process.communicate()
+                # for line in log_lines():
+                #     print(line.decode("utf-8"))
+                #     if logger:
+                #         logger.info(line.decode("utf-8"))
 
-                # If any of the processes exited with a non-zero exit code,
-                # raise an exception.
-                if tap_process.returncode and tap_process.returncode != 0:
-                    raise subprocess.CalledProcessError(
-                        tap_process.returncode, tap_process.args
-                    )
-                if target_process.returncode and target_process.returncode != 0:
-                    raise subprocess.CalledProcessError(
-                        target_process.returncode, target_process.args
-                    )
+                # tap_process.stdout.close()
+                # stdout, stderr = target_process.communicate()
 
-                state = json.loads(stdout.decode("utf-8"))
-                self.save_state(state)
+                # # If any of the processes exited with a non-zero exit code,
+                # # raise an exception.
+                # if tap_process.returncode and tap_process.returncode != 0:
+                #     raise subprocess.CalledProcessError(
+                #         tap_process.returncode, tap_process.args
+                #     )
+                # if target_process.returncode and target_process.returncode != 0:
+                #     raise subprocess.CalledProcessError(
+                #         target_process.returncode, target_process.args
+                #     )
+
+                # state = json.loads(stdout.decode("utf-8"))
+                # self.save_state(state)
 
 
 if __name__ == "__main__":

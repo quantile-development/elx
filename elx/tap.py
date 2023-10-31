@@ -111,3 +111,14 @@ class Tap(Singer):
                         stdout=PIPE,
                         stderr=PIPE,
                     )
+
+    def invoke(self, streams: Optional[List[str]] = None) -> None:
+        """
+        Invoke the tap.
+
+        Args:
+            streams (Optional[List[str]], optional): The streams to invoke. Defaults to None.
+        """
+        with self.process(streams=streams) as process:
+            for line in process.stdout:
+                print(line.decode("utf-8"))
