@@ -1,17 +1,17 @@
+import asyncio
+import contextlib
 from subprocess import PIPE, Popen
 from typing import Generator, Optional
 from elx.singer import Singer, require_install
 from elx.json_temp_file import json_temp_file
-import contextlib
 
 
 class Target(Singer):
-    @contextlib.contextmanager
+    @contextlib.asynccontextmanager
     @require_install
-    def process(
+    async def process(
         self,
         tap_process: Popen,
-        config_interpolation: Optional[dict] = {},
     ) -> Generator[Popen, None, None]:
         """
         Run the tap process.
@@ -26,13 +26,13 @@ class Target(Singer):
             Popen: The tap process.
         """
         with json_temp_file(self.config) as config_path:
-            yield Popen(
-                [
+            yield await asyncio.create_subprocess_exec(
+                *[
                     self.executable,
                     "--config",
                     str(config_path),
                 ],
-                stdin=tap_process.stdout,
-                stdout=PIPE,
-                stderr=PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )

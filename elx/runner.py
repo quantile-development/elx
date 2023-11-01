@@ -1,7 +1,11 @@
+import asyncio
 import datetime
 import json
 import logging
+import select
 import subprocess
+import sys
+import threading
 from typing import List, Optional
 
 from functools import cached_property
@@ -11,6 +15,50 @@ from elx import StateManager
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
+
+
+async def _write_line_writer(writer, line):
+    # StreamWriters like a subprocess's stdin need special consideration
+    if isinstance(writer, asyncio.StreamWriter):
+        try:
+            writer.write(line)
+            await writer.drain()
+        except (BrokenPipeError, ConnectionResetError):
+            await writer.wait_closed()
+            return False
+    else:
+        writer.writelines(line.decode())
+
+    return True
+
+
+async def capture_subprocess_output(
+    reader: asyncio.StreamReader | None,
+    *line_writers,
+) -> None:
+    """Capture in real time the output stream of a suprocess that is run async.
+
+    The stream has been set to asyncio.subprocess.PIPE and is provided using
+    reader to this function.
+
+    As new lines are captured for reader, they are written to output_stream.
+    This async function should be run with await asyncio.wait() while waiting
+    for the subprocess to end.
+
+    Args:
+        reader: `asyncio.StreamReader` object that is the output stream of the
+            subprocess.
+        line_writers: A `StreamWriter`, or object has a compatible writelines method.
+    """
+    while not reader.at_eof():
+        line = await reader.readline()
+        if not line:
+            continue
+
+        for writer in line_writers:
+            if not await _write_line_writer(writer, line):
+                # If the destination stream is closed, we can stop capturing output.
+                return
 
 
 class Runner:
@@ -56,44 +104,138 @@ class Runner:
             "TARGET_NAME": self.target.executable.replace("-", "_"),
         }
 
-    def run(
+    async def run(
         self,
         streams: Optional[List[str]] = None,
         logger: logging.Logger = None,
     ) -> None:
         state = self.load_state()
 
-        with self.tap.process(state=state, streams=streams) as tap_process:
-            with self.target.process(tap_process=tap_process) as target_process:
+        async with self.tap.process(state=state, streams=streams) as tap_process:
+            async with self.target.process(tap_process=tap_process) as target_process:
+                tap_outputs = [target_process.stdin]
+                tap_stdout_future = asyncio.ensure_future(
+                    # forward subproc stdout to tap_outputs (i.e. targets stdin)
+                    capture_subprocess_output(tap_process.stdout, *tap_outputs),
+                )
+                tap_stderr_future = asyncio.ensure_future(
+                    capture_subprocess_output(tap_process.stderr, sys.stderr),
+                )
 
-                
+                target_outputs = []
+                target_stdout_future = asyncio.ensure_future(
+                    capture_subprocess_output(target_process.stdout, *target_outputs),
+                )
+                target_stderr_future = asyncio.ensure_future(
+                    capture_subprocess_output(target_process.stderr, sys.stderr),
+                )
 
-                # def log_lines():
-                #     yield from iter(tap_process.stderr.readline, b"")
-                #     yield from iter(tap_process.stdout.readline, b"")
-                #     yield from iter(target_process.stderr.readline, b"")
-                #     yield from iter(target_process.stdout.readline, b"")
+                tap_process_future = asyncio.ensure_future(tap_process.wait())
+                target_process_future = asyncio.ensure_future(target_process.wait())
+                output_exception_future = asyncio.ensure_future(
+                    asyncio.wait(
+                        [
+                            tap_stdout_future,
+                            tap_stderr_future,
+                            target_stdout_future,
+                            target_stderr_future,
+                        ],
+                        return_when=asyncio.FIRST_EXCEPTION,
+                    ),
+                )
 
-                # for line in log_lines():
-                #     print(line.decode("utf-8"))
-                #     if logger:
-                #         logger.info(line.decode("utf-8"))
+                done, _ = await asyncio.wait(
+                    [
+                        tap_process_future,
+                        target_process_future,
+                        output_exception_future,
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
 
-                # tap_process.stdout.close()
-                # stdout, stderr = target_process.communicate()
+                if output_exception_future in done:
+                    output_futures_done, _ = output_exception_future.result()
+                    if output_futures_failed := [
+                        future
+                        for future in output_futures_done
+                        if future.exception() is not None
+                    ]:
+                        # If any output handler raised an exception, re-raise it.
 
-                # # If any of the processes exited with a non-zero exit code,
-                # # raise an exception.
-                # if tap_process.returncode and tap_process.returncode != 0:
-                #     raise subprocess.CalledProcessError(
-                #         tap_process.returncode, tap_process.args
-                #     )
-                # if target_process.returncode and target_process.returncode != 0:
-                #     raise subprocess.CalledProcessError(
-                #         target_process.returncode, target_process.args
-                #     )
+                        # # Special behavior for the tap stdout handler raising a line
+                        # # length limit error.
+                        # if tap_stdout_future in output_futures_failed:
+                        #     self._handle_tap_line_length_limit_error(
+                        #         tap_stdout_future.exception(),
+                        #         line_length_limit=line_length_limit,
+                        #         stream_buffer_size=stream_buffer_size,
+                        #     )
 
-                # state = json.loads(stdout.decode("utf-8"))
+                        failed_future = output_futures_failed.pop()
+                        raise failed_future.exception()  # noqa: RSE102
+                    else:
+                        # If all of the output handlers completed without raising an
+                        # exception, we still need to wait for the tap or target to
+                        # complete.
+                        done, _ = await asyncio.wait(
+                            [tap_process_future, target_process_future],
+                            return_when=asyncio.FIRST_COMPLETED,
+                        )
+
+                if target_process_future in done:
+                    target_code = target_process_future.result()
+
+                    if tap_process_future in done:
+                        tap_code = tap_process_future.result()
+                    else:
+                        # If the target completes before the tap, it failed before
+                        # processing all tap output
+
+                        # Kill tap and cancel output processing since there's no more
+                        # target to forward messages to
+                        tap_process.kill()
+                        await tap_process_future
+                        tap_stdout_future.cancel()
+                        tap_stderr_future.cancel()
+
+                        # Pretend the tap finished successfully since it didn't itself fail
+                        tap_code = 0
+
+                    # Wait for all buffered target output to be processed
+                    await asyncio.wait([target_stdout_future, target_stderr_future])
+                else:  # if tap_process_future in done:
+                    # If the tap completes before the target, the target should have a
+                    # chance to process all tap output
+                    tap_code = tap_process_future.result()
+
+                    # Wait for all buffered tap output to be processed
+                    await asyncio.wait([tap_stdout_future, tap_stderr_future])
+
+                    # Close target stdin so process can complete naturally
+                    target_process.stdin.close()
+                    await target_process.stdin.wait_closed()
+
+                    # Wait for all buffered target output to be processed
+                    await asyncio.wait([target_stdout_future, target_stderr_future])
+
+                    # Wait for target to complete
+                    target_code = await target_process_future
+
+                if tap_code and target_code:
+                    print("Extractor and loader failed", tap_code, target_code)
+                    # raise RunnerError(
+                    #     "Extractor and loader failed",
+                    #     {PluginType.EXTRACTORS: tap_code, PluginType.LOADERS: target_code},
+                    # )
+                elif tap_code:
+                    # raise RunnerError("Extractor failed", {PluginType.EXTRACTORS: tap_code})
+                    print("Extractor failed", tap_code)
+                elif target_code:
+                    # raise RunnerError("Loader failed", {PluginType.LOADERS: target_code})
+                    print("Loader failed", target_code)
+
+                # Save the state.
+                print("state", await tap_process.stdout.readline())
                 # self.save_state(state)
 
 

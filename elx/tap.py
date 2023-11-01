@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import contextlib
 from functools import cached_property
@@ -80,9 +81,9 @@ class Tap(Singer):
         """
         return [Stream(**stream) for stream in self.catalog["streams"]]
 
-    @contextlib.contextmanager
+    @contextlib.asynccontextmanager
     @require_install
-    def process(
+    async def process(
         self,
         state: dict = {},
         streams: Optional[List[str]] = None,
@@ -98,7 +99,33 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog) as catalog_path:
                 with json_temp_file(state) as state_path:
-                    yield Popen(
+                    yield await asyncio.create_subprocess_exec(
+                        *[
+                            self.executable,
+                            "--config",
+                            str(config_path),
+                            "--catalog",
+                            str(catalog_path),
+                            "--state",
+                            str(state_path),
+                        ],
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+
+    def invoke(self, streams: Optional[List[str]] = None, limit: int = None) -> None:
+        """
+        Invoke the tap.
+
+        Args:
+            streams (Optional[List[str]], optional): The streams to invoke. Defaults to None.
+        """
+        catalog = self.filtered_catalog(catalog=self.catalog, streams=streams)
+
+        with json_temp_file(self.config) as config_path:
+            with json_temp_file(catalog) as catalog_path:
+                with json_temp_file({}) as state_path:
+                    process = Popen(
                         [
                             self.executable,
                             "--config",
@@ -112,13 +139,10 @@ class Tap(Singer):
                         stderr=PIPE,
                     )
 
-    def invoke(self, streams: Optional[List[str]] = None) -> None:
-        """
-        Invoke the tap.
+                    n_lines = 0
 
-        Args:
-            streams (Optional[List[str]], optional): The streams to invoke. Defaults to None.
-        """
-        with self.process(streams=streams) as process:
-            for line in process.stdout:
-                print(line.decode("utf-8"))
+                    for line in process.stdout:
+                        if limit and n_lines >= limit:
+                            break
+                        print(line.decode("utf-8"))
+                        n_lines += 1
