@@ -78,6 +78,13 @@ class Runner:
                 state = json.loads(state_line)
                 self.save_state(state)
 
+        class LogWriter:
+            def __init__(self, logger: logging.Logger):
+                self.logger = logger
+
+            def writelines(self, line: str):
+                self.logger.info(line)
+
         async with self.tap.process(state=state, streams=streams) as tap_process:
             async with self.target.process(tap_process=tap_process) as target_process:
                 tap_outputs = [target_process.stdin]
@@ -86,7 +93,9 @@ class Runner:
                     capture_subprocess_output(tap_process.stdout, *tap_outputs),
                 )
                 tap_stderr_future = asyncio.ensure_future(
-                    capture_subprocess_output(tap_process.stderr, sys.stderr),
+                    capture_subprocess_output(
+                        tap_process.stderr, *[sys.stderr, LogWriter(logger)]
+                    ),
                 )
 
                 target_outputs = [StateWriter()]
@@ -94,7 +103,9 @@ class Runner:
                     capture_subprocess_output(target_process.stdout, *target_outputs),
                 )
                 target_stderr_future = asyncio.ensure_future(
-                    capture_subprocess_output(target_process.stderr, sys.stderr),
+                    capture_subprocess_output(
+                        target_process.stderr, *[sys.stderr, LogWriter(logger)]
+                    ),
                 )
 
                 tap_process_future = asyncio.ensure_future(tap_process.wait())
