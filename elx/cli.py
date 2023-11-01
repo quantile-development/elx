@@ -175,13 +175,9 @@ def el(path: Path):
     tap = taps[tap_name]
     target = targets[target_name]
 
-    runner = Runner(tap=tap, target=target, state_manager=StateManager("/tmp"))
+    runner = Runner(tap=tap, target=target, state_manager=StateManager("."))
 
-    async def run():
-        await runner.run()
-
-    # tap.invoke()
-    asyncio.run(run())
+    runner.run()
 
 
 def main():

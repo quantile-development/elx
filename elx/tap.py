@@ -113,13 +113,19 @@ class Tap(Singer):
                         stderr=asyncio.subprocess.PIPE,
                     )
 
-    def invoke(self, streams: Optional[List[str]] = None, limit: int = None) -> None:
+    def invoke(
+        self,
+        streams: Optional[List[str]] = None,
+        limit: int = None,
+    ) -> None:
         """
         Invoke the tap.
 
         Args:
             streams (Optional[List[str]], optional): The streams to invoke. Defaults to None.
         """
+        # TODO: Make use of the process context manager.
+
         catalog = self.filtered_catalog(catalog=self.catalog, streams=streams)
 
         with json_temp_file(self.config) as config_path:

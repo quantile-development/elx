@@ -14,51 +14,9 @@ from elx.target import Target
 from elx import StateManager
 from dotenv import load_dotenv
 
+from elx.utils import capture_subprocess_output
+
 logging.basicConfig(level=logging.INFO)
-
-
-async def _write_line_writer(writer, line):
-    # StreamWriters like a subprocess's stdin need special consideration
-    if isinstance(writer, asyncio.StreamWriter):
-        try:
-            writer.write(line)
-            await writer.drain()
-        except (BrokenPipeError, ConnectionResetError):
-            await writer.wait_closed()
-            return False
-    else:
-        writer.writelines(line.decode())
-
-    return True
-
-
-async def capture_subprocess_output(
-    reader: asyncio.StreamReader | None,
-    *line_writers,
-) -> None:
-    """Capture in real time the output stream of a suprocess that is run async.
-
-    The stream has been set to asyncio.subprocess.PIPE and is provided using
-    reader to this function.
-
-    As new lines are captured for reader, they are written to output_stream.
-    This async function should be run with await asyncio.wait() while waiting
-    for the subprocess to end.
-
-    Args:
-        reader: `asyncio.StreamReader` object that is the output stream of the
-            subprocess.
-        line_writers: A `StreamWriter`, or object has a compatible writelines method.
-    """
-    while not reader.at_eof():
-        line = await reader.readline()
-        if not line:
-            continue
-
-        for writer in line_writers:
-            if not await _write_line_writer(writer, line):
-                # If the destination stream is closed, we can stop capturing output.
-                return
 
 
 class Runner:
@@ -72,10 +30,6 @@ class Runner:
         self.tap = tap
         self.target = target
         self.state_manager = state_manager
-
-        # Give the tap and target access to the runner.
-        self.tap.runner = self
-        self.target.runner = self
 
     @property
     def state_file_name(self) -> str:
@@ -104,12 +58,25 @@ class Runner:
             "TARGET_NAME": self.target.executable.replace("-", "_"),
         }
 
-    async def run(
+    def run(
+        self,
+        streams: Optional[List[str]] = None,
+        logger: logging.Logger = None,
+    ) -> None:
+        asyncio.run(self.async_run(streams=streams, logger=logger))
+
+    async def async_run(
         self,
         streams: Optional[List[str]] = None,
         logger: logging.Logger = None,
     ) -> None:
         state = self.load_state()
+
+        class StateWriter:
+            @staticmethod
+            def writelines(state_line: str):
+                state = json.loads(state_line)
+                self.save_state(state)
 
         async with self.tap.process(state=state, streams=streams) as tap_process:
             async with self.target.process(tap_process=tap_process) as target_process:
@@ -122,7 +89,7 @@ class Runner:
                     capture_subprocess_output(tap_process.stderr, sys.stderr),
                 )
 
-                target_outputs = []
+                target_outputs = [StateWriter()]
                 target_stdout_future = asyncio.ensure_future(
                     capture_subprocess_output(target_process.stdout, *target_outputs),
                 )
@@ -222,20 +189,14 @@ class Runner:
                     target_code = await target_process_future
 
                 if tap_code and target_code:
-                    print("Extractor and loader failed", tap_code, target_code)
-                    # raise RunnerError(
-                    #     "Extractor and loader failed",
-                    #     {PluginType.EXTRACTORS: tap_code, PluginType.LOADERS: target_code},
-                    # )
+                    raise Exception("Tap and target failed")
                 elif tap_code:
-                    # raise RunnerError("Extractor failed", {PluginType.EXTRACTORS: tap_code})
-                    print("Extractor failed", tap_code)
+                    raise Exception("Tap failed")
                 elif target_code:
-                    # raise RunnerError("Loader failed", {PluginType.LOADERS: target_code})
-                    print("Loader failed", target_code)
+                    raise Exception("Target failed")
 
                 # Save the state.
-                print("state", await tap_process.stdout.readline())
+                # print("state", await tap_process.stdout.readline())
                 # self.save_state(state)
 
 
