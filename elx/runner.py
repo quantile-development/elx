@@ -68,7 +68,7 @@ class Runner:
     async def async_run(
         self,
         streams: Optional[List[str]] = None,
-        logger: logging.Logger = None,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         state = self.load_state()
 
@@ -79,11 +79,12 @@ class Runner:
                 self.save_state(state)
 
         class LogWriter:
-            def __init__(self, logger: logging.Logger):
+            def __init__(self, logger: Optional[logging.Logger]):
                 self.logger = logger
 
             def writelines(self, line: str):
-                self.logger.info(line)
+                if self.logger:
+                    self.logger.info(line)
 
         async with self.tap.process(state=state, streams=streams) as tap_process:
             async with self.target.process(tap_process=tap_process) as target_process:
