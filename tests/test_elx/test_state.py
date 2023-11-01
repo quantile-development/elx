@@ -42,12 +42,13 @@ def test_transport_parameters_gcs_token(monkeypatch: MonkeyPatch):
         assert type(gcs_state_client.params["client"]) == Client
 
 
-def test_state_save(state_manager: StateManager):
+@pytest.mark.asyncio
+async def test_state_save(state_manager: StateManager):
     """
     Test that state is saved to the correct path.
     """
     state_manager.save("test.json", {"foo": "bar"})
-    assert Path(state_manager.base_path, "test.json").exists()
+    assert await Path(state_manager.base_path, "test.json").exists()
 
 
 def test_state_merge(state_manager: StateManager):

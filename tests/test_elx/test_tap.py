@@ -1,3 +1,5 @@
+import asyncio
+import pytest
 from subprocess import Popen
 from elx import Tap
 from elx.catalog import Stream
@@ -13,15 +15,14 @@ def test_tap_discovery(tap: Tap):
     assert len(tap.catalog["streams"]) == 1
 
 
-def test_tap_process(tap: Tap):
+@pytest.mark.asyncio
+async def test_tap_process(tap: Tap):
     """
     Test that the tap process can be run.
     """
-    with tap.process() as process:
+    async with tap.process() as process:
         # Make sure the tap process is of the right type.
-        assert type(process) == Popen
-        # Make sure the tap process is running.
-        assert process.poll() is None
+        assert type(process) == asyncio.subprocess.Process
 
 
 def test_tap_streams(tap: Tap):
