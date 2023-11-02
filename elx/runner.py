@@ -31,6 +31,10 @@ class Runner:
         self.target = target
         self.state_manager = state_manager
 
+        # Give the tap and target access to the runner
+        self.tap.runner = self
+        self.target.runner = self
+
     @property
     def state_file_name(self) -> str:
         return f"{self.tap.executable}-{self.target.executable}.json"

@@ -1,4 +1,4 @@
-from elx import Runner
+from elx import Runner, Target, Tap
 from pathlib import Path
 
 
@@ -24,3 +24,19 @@ def test_config_interpolation_values(runner: Runner):
     """
     assert runner.interpolation_values["TAP_EXECUTABLE"] == "tap-smoke-test"
     assert runner.interpolation_values["TARGET_EXECUTABLE"] == "target-jsonl"
+
+
+def test_config_interpolation_target_values(tap: Tap):
+    """
+    Make sure the config gets interpolated correctly on the singer side.
+    """
+    target = Target(
+        "target-jsonl",
+        config={
+            "tap_name": "{TAP_NAME}",
+        },
+    )
+
+    runner = Runner(tap, target)
+
+    assert runner.target.config["tap_name"] == "tap_smoke_test"
