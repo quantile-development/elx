@@ -117,6 +117,7 @@ class Tap(Singer):
         self,
         streams: Optional[List[str]] = None,
         limit: int = None,
+        debug: bool = True,
     ) -> None:
         """
         Invoke the tap.
@@ -150,5 +151,6 @@ class Tap(Singer):
                     for line in process.stdout:
                         if limit and n_lines >= limit:
                             break
-                        print(line.decode("utf-8"))
+                        if debug:
+                            print(line.decode("utf-8"))
                         n_lines += 1

@@ -1,4 +1,5 @@
 import imp
+import os
 from pathlib import Path
 
 
@@ -18,3 +19,22 @@ def load_variables_from_path(path: Path) -> dict:
     variables = vars(file)
 
     return variables
+
+
+def obfuscate_secrets(config: dict, secrets: dict = os.environ) -> str:
+    """
+    Obfuscate secrets in a config, only show the first character.
+
+    Args:
+        config (dict): The config to obfuscate.
+        secrets (dict): The secrets to obfuscate.
+
+    Returns:
+        str: The obfuscated config.
+    """
+    for key, value in config.items():
+        for secret_key, secret_value in secrets.items():
+            if secret_value == value:
+                config[key] = secret_value[:3] + "*" * (len(secret_value) - 3)
+
+    return config

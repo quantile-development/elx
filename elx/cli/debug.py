@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import inquirer
@@ -6,7 +7,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.json import JSON
 from elx.runner import Runner
-from elx.cli.utils import load_variables_from_path
+from elx.cli.utils import load_variables_from_path, obfuscate_secrets
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 
 
 def select_runner(runners: dict[str, Runner]) -> Runner:
@@ -94,11 +96,30 @@ def debug(path: Path):
     )
     table.add_row(
         "Tap config",
-        json.dumps(runner.tap.config, indent=2),
+        json.dumps(obfuscate_secrets(runner.tap.config), indent=2),
     )
     table.add_row(
         "Target config",
-        json.dumps(runner.target.config, indent=2),
+        json.dumps(obfuscate_secrets(runner.target.config), indent=2),
     )
 
     console.print(table)
+
+    # runner.tap.invoke()
+
+    with Progress(
+        "[progress.description]{task.description}",
+        BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        TextColumn("[bold blue]{task.fields[stream]}"),
+        # TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task(
+            "Testing tap streams",
+            stream="stream",
+            total=len(runner.tap.streams),
+        )
+
+        for stream in runner.tap.streams:
+            progress.update(task, advance=1, stream=stream.name)
+            runner.tap.invoke([stream.name], limit=2, debug=False)
