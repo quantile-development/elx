@@ -31,9 +31,27 @@ class Runner:
         self.target = target
         self.state_manager = state_manager
 
-        # Give the tap and target access to the runner
-        self.tap.runner = self
-        self.target.runner = self
+    @property
+    def name(self) -> str:
+        return f"{self.tap.executable}-{self.target.executable}"
+
+    @property
+    def tap(self) -> Tap:
+        return self._tap
+
+    @tap.setter
+    def tap(self, tap: Tap) -> None:
+        tap.runner = self
+        self._tap = tap
+
+    @property
+    def target(self) -> Target:
+        return self._target
+
+    @target.setter
+    def target(self, target: Target) -> None:
+        target.runner = self
+        self._target = target
 
     @property
     def state_file_name(self) -> str:
@@ -210,10 +228,6 @@ class Runner:
                     raise Exception("Tap failed")
                 elif target_code:
                     raise Exception("Target failed")
-
-                # Save the state.
-                # print("state", await tap_process.stdout.readline())
-                # self.save_state(state)
 
 
 if __name__ == "__main__":

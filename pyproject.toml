@@ -44,4 +44,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-elx = 'elx.cli:main'
+elx = 'elx.cli.app:cli'
