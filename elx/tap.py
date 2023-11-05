@@ -37,7 +37,9 @@ class Tap(Singer):
             return catalog
 
     def filtered_catalog(
-        self, catalog: dict, streams: Optional[List[str]] = None
+        self,
+        catalog: dict,
+        streams: Optional[List[str]] = None,
     ) -> dict:
         """
         Filter the catalog.

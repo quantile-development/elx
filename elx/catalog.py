@@ -19,3 +19,15 @@ class Stream(BaseModel):
     @property
     def safe_name(self) -> str:
         return self.name.replace("-", "_")
+
+
+class CatalogSelector:
+    def __init__(self, catalog: dict):
+        self.catalog = catalog
+
+    def filter(
+        self,
+        selected: List[str] = ["*.*"],
+        deselected: List[str] = [],
+    ) -> dict:
+        return self.catalog
