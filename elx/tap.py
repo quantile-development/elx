@@ -5,12 +5,22 @@ from functools import cached_property
 from pathlib import Path
 from typing import Generator, List, Optional
 from elx.singer import Singer, require_install
-from elx.catalog import Stream
+from elx.catalog import Stream, Catalog
 from elx.json_temp_file import json_temp_file
 from subprocess import Popen, PIPE
 
 
 class Tap(Singer):
+    def __init__(
+        self,
+        spec: str,
+        executable: str | None = None,
+        config: dict = {},
+        selected: List[str] = [],
+    ):
+        super().__init__(spec, executable, config)
+        self.selected = selected
+
     def discover(self, config_path: Path) -> dict:
         """
         Run the tap in discovery mode.
@@ -25,7 +35,7 @@ class Tap(Singer):
         return self.run(["--config", str(config_path), "--discover"])
 
     @cached_property
-    def catalog(self) -> dict:
+    def catalog(self) -> Catalog:
         """
         Discover the catalog.
 
@@ -34,54 +44,8 @@ class Tap(Singer):
         """
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
-            return catalog
-
-    def filtered_catalog(
-        self,
-        catalog: dict,
-        streams: Optional[List[str]] = None,
-    ) -> dict:
-        """
-        Filter the catalog.
-
-        Args:
-            catalog (dict): The catalog.
-            streams (Optional[List[str]], optional): The streams to filter on. Defaults to None.
-
-        Returns:
-            dict: The filtered catalog.
-        """
-        if not streams:
-            return catalog
-
-        return {
-            "streams": [
-                {
-                    **stream,
-                    "selected": stream["tap_stream_id"] in streams,
-                    "metadata": stream["metadata"]
-                    + [
-                        {
-                            "metadata": {
-                                "selected": stream["tap_stream_id"] in streams,
-                            },
-                            "breadcrumb": [],
-                        }
-                    ],
-                }
-                for stream in catalog["streams"]
-            ]
-        }
-
-    @property
-    def streams(self) -> list[Stream]:
-        """
-        Get the streams from the catalog.
-
-        Returns:
-            list[Stream]: The streams.
-        """
-        return [Stream(**stream) for stream in self.catalog["streams"]]
+            catalog = Catalog(**catalog)
+            return catalog.select(streams=self.selected)
 
     @contextlib.asynccontextmanager
     @require_install
@@ -96,7 +60,7 @@ class Tap(Singer):
         Returns:
             Popen: The tap process.
         """
-        catalog = self.filtered_catalog(catalog=self.catalog, streams=streams)
+        catalog = self.catalog.select(streams=streams)
 
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog) as catalog_path:
@@ -128,7 +92,7 @@ class Tap(Singer):
         """
         # TODO: Make use of the process context manager.
 
-        catalog = self.filtered_catalog(catalog=self.catalog, streams=streams)
+        catalog = self.catalog.select(streams=streams)
 
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog) as catalog_path:
