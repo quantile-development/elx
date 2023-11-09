@@ -16,7 +16,7 @@ class Tap(Singer):
         spec: str,
         executable: str | None = None,
         config: dict = {},
-        selected: List[str] = [],
+        selected: List[str] = None,
     ):
         super().__init__(spec, executable, config)
         self.selected = selected
@@ -63,7 +63,7 @@ class Tap(Singer):
         catalog = self.catalog.select(streams=streams)
 
         with json_temp_file(self.config) as config_path:
-            with json_temp_file(catalog) as catalog_path:
+            with json_temp_file(catalog.dict(by_alias=True)) as catalog_path:
                 with json_temp_file(state) as state_path:
                     yield await asyncio.create_subprocess_exec(
                         *[
@@ -95,7 +95,7 @@ class Tap(Singer):
         catalog = self.catalog.select(streams=streams)
 
         with json_temp_file(self.config) as config_path:
-            with json_temp_file(catalog) as catalog_path:
+            with json_temp_file(catalog.dict(by_alias=True)) as catalog_path:
                 with json_temp_file({}) as state_path:
                     process = Popen(
                         [

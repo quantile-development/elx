@@ -82,5 +82,3 @@ def test_catalog_update(tap: Tap):
         ]
         == False
     )
-
-    print(catalog.dict(by_alias=True))

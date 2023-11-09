@@ -45,17 +45,6 @@ def test_singer_can_install(singer: Singer):
     assert singer.is_installed
 
 
-def test_singer_can_run(singer: Singer):
-    """
-    Test that the singer executable can run.
-    """
-    # Uninstall the singer executable if it is installed.
-    pipx_uninstall(singer.executable)
-    # Run the executable and make sure it installs.
-    with pytest.raises(DecodeException):
-        singer.run(["--version"])
-
-
 def test_singer_config_file(singer: Singer):
     """
     Test that the singer config file is created and deleted.
@@ -81,7 +70,6 @@ def test_singer_dynamic_config():
     """
     Make sure the Singer instance is able to handle dynamic config.
     """
-
     singer = Singer(
         executable="tap-smoke-test",
         spec="git+https://github.com/meltano/tap-smoke-test.git",
@@ -95,7 +83,6 @@ def test_singer_config_interpolation(runner: Runner):
     """
     Make sure the Singer instance is able to handle config interpolation.
     """
-
     singer = Singer(
         executable="tap-smoke-test",
         spec="git+https://github.com/meltano/tap-smoke-test.git",

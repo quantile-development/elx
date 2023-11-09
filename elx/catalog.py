@@ -34,15 +34,24 @@ class Stream(BaseModel):
 class Catalog(BaseModel):
     streams: List[Stream] = Field(default_factory=list)
 
-    def select(self, streams: List[str]) -> "Catalog":
-        catalog = self.copy()
+    def select(self, streams: Optional[List[str]]) -> "Catalog":
+        # Make a copy of the existing catalog.
+        catalog = self.copy(deep=True)
 
+        # Simply return the catalog if no streams are selected.
+        if streams is None:
+            return catalog
+
+        # Loop through the streams in the catalog.
         for stream in catalog.streams:
+            # Find the stream metadata.
             metadata = stream.find_by_breadcrumb([])
 
+            # Update the metadata if it exists.
             if metadata:
                 metadata["metadata"]["selected"] = stream.tap_stream_id in streams
 
+            # Otherwise, create the metadata.
             else:
                 stream.metadata.append(
                     {
@@ -54,22 +63,3 @@ class Catalog(BaseModel):
                 )
 
         return catalog
-
-
-# class Schema(BaseModel):
-#     properties: dict
-
-
-# class CatalogSelector:
-#     def __init__(self, catalog: dict):
-#         self.catalog = catalog
-
-#     def update(self, update: dict):
-#         self.catalog = catalog
-
-#     def filter(
-#         self,
-#         selected: List[str] = ["*.*"],
-#         deselected: List[str] = [],
-#     ) -> dict:
-#         return self.catalog
