@@ -74,7 +74,7 @@ def load_assets(runner: Runner) -> List[AssetsDefinition]:
                     key_prefix=dagster_safe_name(runner.tap.executable),
                     code_version=runner.tap.hash_key,
                 )
-                for stream in runner.tap.streams
+                for stream in runner.tap.catalog.streams
             },
             can_subset=True,
             group_name=dagster_safe_name(runner.tap.executable),
