@@ -50,7 +50,7 @@ def invoke(
         inquirer.List(
             "stream",
             message="Which stream do you want to invoke?",
-            choices=["all", *[stream.name for stream in tap.streams]],
+            choices=["all", *[stream.name for stream in tap.catalog.streams]],
             default="all",
             carousel=True,
         ),

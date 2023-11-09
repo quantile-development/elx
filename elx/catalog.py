@@ -49,7 +49,9 @@ class Catalog(BaseModel):
 
             # Update the metadata if it exists.
             if metadata:
-                metadata["metadata"]["selected"] = stream.tap_stream_id in streams
+                metadata["metadata"]["selected"] = (
+                    stream.tap_stream_id in streams
+                ) or (stream.safe_name in streams)
 
             # Otherwise, create the metadata.
             else:
@@ -57,7 +59,8 @@ class Catalog(BaseModel):
                     {
                         "breadcrumb": [],
                         "metadata": {
-                            "selected": stream.tap_stream_id in streams,
+                            "selected": (stream.tap_stream_id in streams)
+                            or (stream.safe_name in streams),
                         },
                     }
                 )
