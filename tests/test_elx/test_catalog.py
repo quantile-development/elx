@@ -64,7 +64,7 @@ def test_catalog(tap: Tap):
     assert tap.catalog.dict(by_alias=True) == DEFAULT_CATALOG
 
 
-def test_catalog_update(tap: Tap):
+def test_catalog_select(tap: Tap):
     catalog = tap.catalog.select(["animals"])
 
     assert (
@@ -80,5 +80,25 @@ def test_catalog_update(tap: Tap):
         catalog.dict(by_alias=True)["streams"][0]["metadata"][-1]["metadata"][
             "selected"
         ]
+        == False
+    )
+
+
+def test_catalog_deselect_stream(tap: Tap):
+    catalog = tap.catalog.deselect(["animals"])
+
+    assert (
+        catalog.dict(by_alias=True)["streams"][0]["metadata"][-1]["metadata"][
+            "selected"
+        ]
+        == False
+    )
+
+
+def test_catalog_deselect_property(tap: Tap):
+    catalog = tap.catalog.deselect(["animals.id"])
+
+    assert (
+        catalog.dict(by_alias=True)["streams"][0]["metadata"][0]["metadata"]["selected"]
         == False
     )
