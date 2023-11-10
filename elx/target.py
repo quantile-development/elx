@@ -12,6 +12,7 @@ class Target(Singer):
     async def process(
         self,
         tap_process: Popen,
+        limit: int,
     ) -> Generator[Popen, None, None]:
         """
         Run the tap process.
@@ -35,5 +36,5 @@ class Target(Singer):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                limit=10485760,  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
+                limit=limit,
             )

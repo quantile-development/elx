@@ -35,6 +35,8 @@ class Runner:
         self.tap.runner = self
         self.target.runner = self
 
+    DEFAULT_BUFFER_SIZE_LIMIT = 10485760  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
+
     @property
     def state_file_name(self) -> str:
         return f"{self.tap.executable}-{self.target.executable}.json"
@@ -90,8 +92,15 @@ class Runner:
                 if self.logger:
                     self.logger.info(line)
 
-        async with self.tap.process(state=state, streams=streams) as tap_process:
-            async with self.target.process(tap_process=tap_process) as target_process:
+        async with self.tap.process(
+            state=state,
+            streams=streams,
+            limit=self.DEFAULT_BUFFER_SIZE_LIMIT,
+        ) as tap_process:
+            async with self.target.process(
+                tap_process=tap_process,
+                limit=self.DEFAULT_BUFFER_SIZE_LIMIT,
+            ) as target_process:
                 tap_outputs = [target_process.stdin]
                 tap_stdout_future = asyncio.ensure_future(
                     # forward subproc stdout to tap_outputs (i.e. targets stdin)
