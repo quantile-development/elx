@@ -69,7 +69,12 @@ class Runner:
         streams: Optional[List[str]] = None,
         logger: logging.Logger = None,
     ) -> None:
-        asyncio.run(self.async_run(streams=streams, logger=logger))
+        asyncio.get_event_loop().run_until_complete(
+            self.async_run(
+                streams=streams,
+                logger=logger,
+            )
+        )
 
     async def async_run(
         self,
@@ -95,11 +100,9 @@ class Runner:
         async with self.tap.process(
             state=state,
             streams=streams,
-            limit=self.DEFAULT_BUFFER_SIZE_LIMIT,
         ) as tap_process:
             async with self.target.process(
                 tap_process=tap_process,
-                limit=self.DEFAULT_BUFFER_SIZE_LIMIT,
             ) as target_process:
                 tap_outputs = [target_process.stdin]
                 tap_stdout_future = asyncio.ensure_future(

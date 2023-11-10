@@ -1,6 +1,5 @@
 import asyncio
 import pytest
-from subprocess import Popen
 from elx import Tap
 from elx.catalog import Stream, Catalog
 
@@ -22,6 +21,6 @@ async def test_tap_process(tap: Tap):
     """
     Test that the tap process can be run.
     """
-    async with tap.process(limit=1) as process:
+    async with tap.process() as process:
         # Make sure the tap process is of the right type.
         assert type(process) == asyncio.subprocess.Process

@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 from subprocess import PIPE, Popen
 from typing import Generator, Optional
-from elx.singer import Singer, require_install
+from elx.singer import Singer, require_install, BUFFER_SIZE_LIMIT
 from elx.json_temp_file import json_temp_file
 
 
@@ -12,7 +12,6 @@ class Target(Singer):
     async def process(
         self,
         tap_process: Popen,
-        limit: int,
     ) -> Generator[Popen, None, None]:
         """
         Run the tap process.
@@ -36,5 +35,5 @@ class Target(Singer):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                limit=limit,
+                limit=BUFFER_SIZE_LIMIT,
             )
