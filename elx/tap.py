@@ -110,6 +110,7 @@ class Tap(Singer):
                         ],
                         stdout=PIPE,
                         stderr=PIPE,
+                        limit=10485760,  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
                     )
 
                     n_lines = 0
