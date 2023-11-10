@@ -35,8 +35,6 @@ class Runner:
         self.tap.runner = self
         self.target.runner = self
 
-    DEFAULT_BUFFER_SIZE_LIMIT = 10485760  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
-
     @property
     def state_file_name(self) -> str:
         return f"{self.tap.executable}-{self.target.executable}.json"
