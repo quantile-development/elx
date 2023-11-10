@@ -35,4 +35,5 @@ class Target(Singer):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                limit=10485760,  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
             )

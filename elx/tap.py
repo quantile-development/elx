@@ -77,6 +77,7 @@ class Tap(Singer):
                         ],
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
+                        limit=10485760,  # Meltano default buffer_size: https://docs.meltano.com/reference/settings/#eltbuffer_size
                     )
 
     def invoke(
