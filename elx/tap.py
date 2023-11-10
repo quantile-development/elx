@@ -51,7 +51,6 @@ class Tap(Singer):
     @require_install
     async def process(
         self,
-        limit: int,
         state: dict = {},
         streams: Optional[List[str]] = None,
     ) -> Generator[Popen, None, None]:
@@ -78,7 +77,6 @@ class Tap(Singer):
                         ],
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
-                        limit=limit,
                     )
 
     def invoke(
