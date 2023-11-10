@@ -16,10 +16,10 @@ class Tap(Singer):
         spec: str,
         executable: str | None = None,
         config: dict = {},
-        selected: List[str] = None,
+        deselected: List[str] = None,
     ):
         super().__init__(spec, executable, config)
-        self.selected = selected
+        self.deselected = deselected
 
     def discover(self, config_path: Path) -> dict:
         """
@@ -45,7 +45,7 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
             catalog = Catalog(**catalog)
-            return catalog.select(streams=self.selected)
+            return catalog.deselect(patterns=self.deselected)
 
     @contextlib.asynccontextmanager
     @require_install

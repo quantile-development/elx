@@ -3,7 +3,7 @@ import pytest
 from elx import Tap
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tap() -> Generator[Tap, None, None]:
     """
     Return a Tap instance for the tap-smoke-test executable.

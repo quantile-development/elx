@@ -64,21 +64,42 @@ def test_catalog(tap: Tap):
     assert tap.catalog.dict(by_alias=True) == DEFAULT_CATALOG
 
 
-def test_catalog_update(tap: Tap):
+def test_catalog_select(tap: Tap):
+    """If we select a stream, the catalog should be updated."""
     catalog = tap.catalog.select(["animals"])
+    catalog_dict = catalog.dict(by_alias=True)
 
-    assert (
-        catalog.dict(by_alias=True)["streams"][0]["metadata"][-1]["metadata"][
-            "selected"
-        ]
-        == True
-    )
+    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == True
 
     catalog = tap.catalog.select([])
+    catalog_dict = catalog.dict(by_alias=True)
 
-    assert (
-        catalog.dict(by_alias=True)["streams"][0]["metadata"][-1]["metadata"][
-            "selected"
-        ]
-        == False
-    )
+    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == False
+
+
+def test_catalog_no_deselect(tap: Tap):
+    """If we don't deselect anything, the catalog should be the same."""
+    catalog = tap.catalog.deselect()
+    assert catalog == tap.catalog
+
+
+def test_catalog_deselect_stream(tap: Tap):
+    """If we deselect a stream, the catalog should be updated."""
+    catalog = tap.catalog.deselect(["animals"])
+    catalog_dict = catalog.dict(by_alias=True)
+
+    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == False
+
+
+def test_catalog_deselect_invalid_stream(tap: Tap):
+    """If we try to deselect an invalid stream, the catalog should be the same."""
+    catalog = tap.catalog.deselect(["invalid"])
+    assert catalog == tap.catalog
+
+
+def test_catalog_deselect_property(tap: Tap):
+    """If we deselect a property, the catalog should be updated."""
+    catalog = tap.catalog.deselect(["animals.id"])
+    catalog_dict = catalog.dict(by_alias=True)
+
+    assert catalog_dict["streams"][0]["metadata"][0]["metadata"]["selected"] == False
