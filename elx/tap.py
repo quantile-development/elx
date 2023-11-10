@@ -4,7 +4,7 @@ import contextlib
 from functools import cached_property
 from pathlib import Path
 from typing import Generator, List, Optional
-from elx.singer import Singer, require_install
+from elx.singer import Singer, require_install, BUFFER_SIZE_LIMIT
 from elx.catalog import Stream, Catalog
 from elx.json_temp_file import json_temp_file
 from subprocess import Popen, PIPE
@@ -77,6 +77,7 @@ class Tap(Singer):
                         ],
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
+                        limit=BUFFER_SIZE_LIMIT,
                     )
 
     def invoke(

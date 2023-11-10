@@ -1,6 +1,5 @@
 import asyncio
 import pytest
-from subprocess import Popen
 from elx import Tap
 from elx.catalog import Stream, Catalog
 
