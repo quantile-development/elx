@@ -158,18 +158,20 @@ def test_catalog_replication_method(tap_incremental: Tap):
     """If we have an incremental stream, the replication_method in the catalog should be `INCREMENTAL`."""
     catalog_dict = tap_incremental.catalog.dict(by_alias=True)
 
-    replication_method = INCREMENTAL_CATALOG["streams"][0]["replication_method"]
-    assert replication_method == "INCREMENTAL"
-    assert catalog_dict["streams"][0]["replication_method"] == "INCREMENTAL"
+    assert (
+        catalog_dict["streams"][0]["replication_method"]
+        == INCREMENTAL_CATALOG["streams"][0]["replication_method"]
+    )
 
 
 def test_catalog_replication_key(tap_incremental: Tap):
     """If we have an incremental stream, the catalog should have a `replication_key`."""
     catalog_dict = tap_incremental.catalog.dict(by_alias=True)
 
-    replication_key = INCREMENTAL_CATALOG["streams"][0]["replication_key"]
-    assert replication_key == "updated_at"
-    assert catalog_dict["streams"][0]["replication_key"] == replication_key
+    assert (
+        catalog_dict["streams"][0]["replication_key"]
+        == INCREMENTAL_CATALOG["streams"][0]["replication_key"]
+    )
 
 
 def test_catalog_valid_replication_keys(tap_incremental: Tap):
@@ -194,8 +196,5 @@ def test_catalog_valid_replication_keys(tap_incremental: Tap):
         "valid-replication-keys", None
     )
 
-    # Checks that the `valid-replication-keys` key exists
-    assert replication_keys != None
-
     # Checks that value of `valid-replication-keys` equals to the replication-key
-    assert replication_keys == ["updated_at"]
+    assert replication_keys == [INCREMENTAL_CATALOG["streams"][0]["replication_key"]]
