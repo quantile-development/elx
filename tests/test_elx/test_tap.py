@@ -11,7 +11,7 @@ def test_tap_discovery(tap: Tap):
     # Make sure the catalog is of the right type.
     assert type(tap.catalog) == Catalog
     # Make sure the catalog has the right number of streams.
-    assert len(tap.catalog.streams) == 1
+    assert len(tap.catalog.streams) == 2
     # Make sure the streams are of the right type.
     assert type(tap.catalog.streams[0]) == Stream
 
