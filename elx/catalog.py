@@ -29,12 +29,12 @@ class Stream(BaseModel):
         # Find the stream metadata by breadcrumb
         metadata = self.find_metadata_by_breadcrumb(breadcrumb=[])
 
-        # If metadata does not exist, stream is not selected
+        # If metadata does not exist, stream should be considered selected
         if not metadata:
-            return False
+            return True
 
         # If metadata does exists, return value of `selected` property
-        return metadata.get("selected", False)
+        return metadata.get("selected", True)
 
     def find_metadata_by_breadcrumb(self, breadcrumb: List[str]) -> Optional[dict]:
         """
