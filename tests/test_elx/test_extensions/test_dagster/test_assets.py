@@ -7,18 +7,12 @@ def test_asset_loading(runner: Runner):
     """
     Test that assets are loaded correctly.
     """
+    # Verifies that the tap associated with the runner has 2 streams
+    assert len(runner.tap.catalog.streams) == 2
+
+    # Load assets
     assets = load_assets(runner)
-    assert len(assets) == 1
-    assert isinstance(assets[0], AssetsDefinition)
 
-
-def test_asset_loading_with_deselected_stream(runner_with_deselected_stream: Runner):
-    """
-    Test that assets are loaded correctly.
-    """
-    # Verifies that the associated tap has multiple streams
-    assert len(runner_with_deselected_stream.tap.catalog.streams) == 2
-
-    assets = load_assets(runner_with_deselected_stream)
+    # Length of assets should be 1 as one stream is deselected per default
     assert len(assets) == 1
     assert isinstance(assets[0], AssetsDefinition)
