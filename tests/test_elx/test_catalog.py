@@ -7,73 +7,54 @@ DEFAULT_CATALOG = {
         {
             "tap_stream_id": "animals",
             "replication_method": "FULL_TABLE",
+            "key_properties": ["id"],
             "replication_key": None,
-            "table_name": None,
             "is_view": False,
-            "key_properties": [],
+            "table_name": None,
             "schema": {
                 "properties": {
-                    "id": {"type": "integer"},
-                    "description": {"type": "string"},
-                    "verified": {"type": "boolean"},
-                    "views": {"type": "integer"},
-                    "created_at": {"type": "string"},
+                    "id": {"type": ["integer", "null"]},
+                    "animal_name": {"type": ["string", "null"]},
+                    "updated_at": {"format": "date-time", "type": ["string", "null"]},
                 },
                 "type": "object",
-                "required": ["created_at", "description", "id", "verified", "views"],
             },
             "metadata": [
                 {
                     "breadcrumb": ["properties", "id"],
+                    "metadata": {"inclusion": "automatic"},
+                },
+                {
+                    "breadcrumb": ["properties", "animal_name"],
                     "metadata": {"inclusion": "available"},
                 },
                 {
-                    "breadcrumb": ["properties", "description"],
-                    "metadata": {"inclusion": "available"},
-                },
-                {
-                    "breadcrumb": ["properties", "verified"],
-                    "metadata": {"inclusion": "available"},
-                },
-                {
-                    "breadcrumb": ["properties", "views"],
-                    "metadata": {"inclusion": "available"},
-                },
-                {
-                    "breadcrumb": ["properties", "created_at"],
+                    "breadcrumb": ["properties", "updated_at"],
                     "metadata": {"inclusion": "available"},
                 },
                 {
                     "breadcrumb": [],
                     "metadata": {
                         "inclusion": "available",
-                        "selected": True,
-                        "selected-by-default": True,
-                        "table-key-properties": [],
+                        "selected": False,
+                        "selected-by-default": False,
+                        "table-key-properties": ["id"],
                     },
                 },
             ],
-        }
-    ]
-}
-
-INCREMENTAL_CATALOG = {
-    "streams": [
+        },
         {
             "tap_stream_id": "users",
-            "replication_method": "INCREMENTAL",
             "replication_key": "updated_at",
-            "table_name": None,
+            "replication_method": "INCREMENTAL",
             "is_view": False,
+            "table_name": None,
             "key_properties": ["id"],
             "schema": {
                 "properties": {
-                    "id": {"type": ["string", "null"]},
+                    "id": {"type": ["integer", "null"]},
                     "name": {"type": ["string", "null"]},
-                    "updated_at": {
-                        "format": "date-time",
-                        "type": ["string", "null"],
-                    },
+                    "updated_at": {"format": "date-time", "type": ["string", "null"]},
                 },
                 "type": "object",
             },
@@ -101,7 +82,7 @@ INCREMENTAL_CATALOG = {
                     },
                 },
             ],
-        }
+        },
     ]
 }
 
@@ -132,9 +113,9 @@ def test_catalog_no_deselect(tap: Tap):
 
 def test_catalog_deselect_stream(tap: Tap):
     """If we deselect a stream, the catalog should be updated."""
-    catalog = tap.catalog.deselect(["animals"])
+    catalog = tap.catalog.deselect(["users"])
 
-    assert catalog.streams[0].is_selected == False
+    assert catalog.streams[1].is_selected == False
 
 
 def test_catalog_deselect_invalid_stream(tap: Tap):
@@ -151,27 +132,29 @@ def test_catalog_deselect_property(tap: Tap):
     assert catalog_dict["streams"][0]["metadata"][0]["metadata"]["selected"] == False
 
 
-def test_catalog_replication_method(tap_incremental: Tap):
+def test_catalog_replication_method(tap: Tap):
     """If we have an incremental stream, the replication_method in the catalog should be `INCREMENTAL`."""
-    catalog_dict = tap_incremental.catalog.dict(by_alias=True)
+    catalog_dict = tap.catalog.dict(by_alias=True)
 
     assert (
-        catalog_dict["streams"][0]["replication_method"]
-        == INCREMENTAL_CATALOG["streams"][0]["replication_method"]
+        catalog_dict["streams"][1]["replication_method"]
+        == DEFAULT_CATALOG["streams"][1]["replication_method"]
     )
 
 
-def test_catalog_replication_key(tap_incremental: Tap):
+def test_catalog_replication_key(tap: Tap):
     """If we have an incremental stream, the catalog should have a `replication_key`."""
-    catalog_dict = tap_incremental.catalog.dict(by_alias=True)
+    catalog_dict = tap.catalog.dict(by_alias=True)
+
+    assert catalog_dict["streams"][1]["replication_key"] != None
 
     assert (
-        catalog_dict["streams"][0]["replication_key"]
-        == INCREMENTAL_CATALOG["streams"][0]["replication_key"]
+        catalog_dict["streams"][1]["replication_key"]
+        == DEFAULT_CATALOG["streams"][1]["replication_key"]
     )
 
 
-def test_catalog_valid_replication_keys(tap_incremental: Tap):
+def test_catalog_valid_replication_keys(tap: Tap):
     """
     If we have an incremental stream, the catalog should have a metadata breadcrumb for the incremental
     stream containing the key: `valid-replication-keys`.
@@ -187,11 +170,11 @@ def test_catalog_valid_replication_keys(tap_incremental: Tap):
         "valid-replication-keys": ["updated_at"],
     }
     """
-    catalog_dict = tap_incremental.catalog.dict(by_alias=True)
+    catalog_dict = tap.catalog.dict(by_alias=True)
 
-    replication_keys = catalog_dict["streams"][0]["metadata"][-1]["metadata"].get(
+    replication_keys = catalog_dict["streams"][1]["metadata"][-1]["metadata"].get(
         "valid-replication-keys", None
     )
 
     # Checks that value of `valid-replication-keys` equals to the replication-key
-    assert replication_keys == [INCREMENTAL_CATALOG["streams"][0]["replication_key"]]
+    assert replication_keys == [DEFAULT_CATALOG["streams"][1]["replication_key"]]
