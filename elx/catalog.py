@@ -7,6 +7,7 @@ class Stream(BaseModel):
     stream: str = Field(alias="tap_stream_id")
     table_name: Optional[str] = None
     replication_method: Optional[str] = "FULL_TABLE"
+    replication_key: Optional[str] = None
     key_properties: List[str]
     stream_schema: dict = Field(alias="schema")
     is_view: Optional[bool] = False
