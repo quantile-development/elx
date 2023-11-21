@@ -3,21 +3,14 @@ import pytest
 from elx.singer import Singer
 
 
-@pytest.fixture(params=["tap-smoke-test", None])
+@pytest.fixture(params=["tap-mock-fixture", None])
 def singer(request) -> Generator[Singer, None, None]:
     """
-    Return a Singer instance for the tap-smoke-test executable.
+    Return a Singer instance for the tap-mock-fixture executable.
     """
     yield Singer(
         # Test with and without an executable.
         executable=request.param,
-        spec="git+https://github.com/meltano/tap-smoke-test.git",
-        config={
-            "streams": [
-                {
-                    "stream_name": "users",
-                    "input_filename": "https://gitlab.com/meltano/tap-smoke-test/-/raw/main/demo-data/animals-data.jsonl",
-                },
-            ],
-        },
+        spec="git+https://github.com/quantile-taps/tap-mock-fixture.git",
+        config={},
     )

@@ -8,7 +8,7 @@ from .target import target
 @pytest.fixture
 def runner(tmp_path, tap: Tap, target: Target) -> Generator[Runner, None, None]:
     """
-    Return a Runner instance for the tap-smoke-test executable.
+    Return a Runner instance for the tap-mock-fixture executable.
     """
     yield Runner(
         tap=tap,
