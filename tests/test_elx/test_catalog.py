@@ -116,14 +116,12 @@ def test_catalog(tap: Tap):
 def test_catalog_select(tap: Tap):
     """If we select a stream, the catalog should be updated."""
     catalog = tap.catalog.select(["animals"])
-    catalog_dict = catalog.dict(by_alias=True)
 
-    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == True
+    assert catalog.streams[0].is_selected == True
 
     catalog = tap.catalog.select([])
-    catalog_dict = catalog.dict(by_alias=True)
 
-    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == False
+    assert catalog.streams[0].is_selected == False
 
 
 def test_catalog_no_deselect(tap: Tap):
@@ -135,9 +133,8 @@ def test_catalog_no_deselect(tap: Tap):
 def test_catalog_deselect_stream(tap: Tap):
     """If we deselect a stream, the catalog should be updated."""
     catalog = tap.catalog.deselect(["animals"])
-    catalog_dict = catalog.dict(by_alias=True)
 
-    assert catalog_dict["streams"][0]["metadata"][-1]["metadata"]["selected"] == False
+    assert catalog.streams[0].is_selected == False
 
 
 def test_catalog_deselect_invalid_stream(tap: Tap):
