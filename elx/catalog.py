@@ -23,6 +23,19 @@ class Stream(BaseModel):
         """"""
         return self.name.replace("-", "_")
 
+    @property
+    def is_selected(self) -> bool:
+        """Returns boolean flag indicating whether stream has been selected or not."""
+        # Find the stream metadata by breadcrumb
+        metadata = self.find_metadata_by_breadcrumb(breadcrumb=[])
+
+        # If metadata does not exist, stream is not selected
+        if not metadata:
+            return False
+
+        # If metadata does exists, return value of `selected` property
+        return metadata.get("selected", False)
+
     def find_metadata_by_breadcrumb(self, breadcrumb: List[str]) -> Optional[dict]:
         """
         Find metadata by breadcrumb.
