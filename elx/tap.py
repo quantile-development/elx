@@ -17,9 +17,11 @@ class Tap(Singer):
         executable: str | None = None,
         config: dict = {},
         deselected: List[str] = None,
+        replication_keys: dict = {},
     ):
         super().__init__(spec, executable, config)
         self.deselected = deselected
+        self.replication_keys = replication_keys
 
     def discover(self, config_path: Path) -> dict:
         """
@@ -45,7 +47,11 @@ class Tap(Singer):
         with json_temp_file(self.config) as config_path:
             catalog = self.discover(config_path)
             catalog = Catalog(**catalog)
-            return catalog.deselect(patterns=self.deselected)
+            catalog = catalog.deselect(patterns=self.deselected)
+            catalog = catalog.set_replication_keys(
+                replication_keys=self.replication_keys
+            )
+            return catalog
 
     @contextlib.asynccontextmanager
     @require_install
