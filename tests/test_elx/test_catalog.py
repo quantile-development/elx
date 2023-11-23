@@ -178,3 +178,11 @@ def test_catalog_valid_replication_keys(tap: Tap):
 
     # Checks that value of `valid-replication-keys` equals to the replication-key
     assert replication_keys == [DEFAULT_CATALOG["streams"][1]["replication_key"]]
+
+
+def test_catalog_set_stream_replication_key(tap: Tap):
+    """If we define a replication key, the catalog should be updated."""
+    catalog = tap.catalog
+
+    assert catalog.streams[1].replication_method == "INCREMENTAL"
+    assert catalog.streams[1].replication_key == "updated_at"
