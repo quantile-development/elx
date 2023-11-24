@@ -186,12 +186,6 @@ class Catalog(BaseModel):
                 # Update the replication key value
                 stream.replication_key = replication_key
 
-                # Add the replication key to stream metadata
-                stream.upsert_metadata(
-                    breadcrumb=[],
-                    metadata={"valid-replication-keys": [replication_key]},
-                )
-
                 # Set inclusion of replication property metadata to `automatic`
                 stream.upsert_metadata(
                     breadcrumb=["properties", replication_key],
