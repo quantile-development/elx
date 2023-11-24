@@ -180,22 +180,21 @@ class Catalog(BaseModel):
                 # Set the replication method to INCREMENTAL
                 stream.replication_method = "INCREMENTAL"
 
+                # The replication key for current stream
+                replication_key = replication_keys[stream.tap_stream_id]
+
                 # Update the replication key value
-                stream.replication_key = replication_keys[stream.tap_stream_id]
+                stream.replication_key = replication_key
 
                 # Add the replication key to stream metadata
                 stream.upsert_metadata(
                     breadcrumb=[],
-                    metadata={
-                        "valid-replication-keys": [
-                            replication_keys[stream.tap_stream_id]
-                        ]
-                    },
+                    metadata={"valid-replication-keys": [replication_key]},
                 )
 
                 # Set inclusion of replication property metadata to `automatic`
                 stream.upsert_metadata(
-                    breadcrumb=["properties", replication_keys[stream.tap_stream_id]],
+                    breadcrumb=["properties", replication_key],
                     metadata={"inclusion": "automatic"},
                 )
 
