@@ -158,3 +158,38 @@ class Catalog(BaseModel):
             )
 
         return catalog
+
+    def set_replication_keys(self, replication_keys: Optional[dict]) -> "Catalog":
+        """
+        Set the replication key for streams and updates the catalog.
+
+        Args:
+            keys (Optional[dict]): Dictionary stream replication_key value-pairs.
+            E.g. {"stream_one": "updated_at", "stream_two": "modified_at"}
+
+        Returns:
+            Catalog: A new catalog with updated replication settings.
+        """
+        # Make a copy of the existing catalog.
+        catalog = self.copy(deep=True)
+
+        # Loop over the streams
+        for stream in catalog.streams:
+            # If the stream is specified in `replication_keys` dictionary
+            if stream.tap_stream_id in replication_keys:
+                # Set the replication method to INCREMENTAL
+                stream.replication_method = "INCREMENTAL"
+
+                # The replication key for current stream
+                replication_key = replication_keys[stream.tap_stream_id]
+
+                # Update the replication key value
+                stream.replication_key = replication_key
+
+                # Set inclusion of replication property metadata to `automatic`
+                stream.upsert_metadata(
+                    breadcrumb=["properties", replication_key],
+                    metadata={"inclusion": "automatic"},
+                )
+
+        return catalog
