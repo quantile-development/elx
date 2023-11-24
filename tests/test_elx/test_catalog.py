@@ -78,7 +78,6 @@ DEFAULT_CATALOG = {
                         "selected": True,
                         "selected-by-default": True,
                         "table-key-properties": ["id"],
-                        "valid-replication-keys": ["updated_at"],
                     },
                 },
             ],
@@ -152,32 +151,6 @@ def test_catalog_replication_key(tap: Tap):
         catalog_dict["streams"][1]["replication_key"]
         == DEFAULT_CATALOG["streams"][1]["replication_key"]
     )
-
-
-def test_catalog_valid_replication_keys(tap: Tap):
-    """
-    If we have an incremental stream, the catalog should have a metadata breadcrumb for the incremental
-    stream containing the key: `valid-replication-keys`.
-
-    This key should be associated with a list containing the fields that could be used as replication keys.
-    For example, the metadata breadcrumb of the stream should look as follows if `updated_at` is its replication_key.
-
-    "metadata": {
-        "inclusion": "available",
-        "selected": True,
-        "selected-by-default": True,
-        "table-key-properties": ["id"],
-        "valid-replication-keys": ["updated_at"],
-    }
-    """
-    catalog_dict = tap.catalog.dict(by_alias=True)
-
-    replication_keys = catalog_dict["streams"][1]["metadata"][-1]["metadata"].get(
-        "valid-replication-keys", None
-    )
-
-    # Checks that value of `valid-replication-keys` equals to the replication-key
-    assert replication_keys == [DEFAULT_CATALOG["streams"][1]["replication_key"]]
 
 
 def test_catalog_set_stream_replication_key(tap: Tap):
