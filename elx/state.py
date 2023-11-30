@@ -61,6 +61,32 @@ class AzureStateClient(StateClient):
             os.environ["AZURE_STORAGE_CONNECTION_STRING"]
         )
 
+    @property
+    def container_name(self) -> str:
+        """
+        Gives the container name where state files are stored in Azure Blob Storage.
+
+        Returns:
+            str: Name of the container.
+        """
+        return self.base_path.replace("azure://", "")
+
+    def has_existing_state(self, state_file_name: str) -> bool:
+        """
+        Checks for a pre-existing state file.
+
+        Args:
+        state_file_name (str): The name of the state file to load.
+
+        Returns:
+            bool: Boolean flag to indicate whether there is a pre-existing state file.
+        """
+        # Get container client where the state file would be located
+        container = self.client.get_container_client(container=self.container_name)
+
+        # Check if state file exists
+        return container.get_blob_client(blob=state_file_name).exists()
+
 
 class GCSStateClient(StateClient):
     """
@@ -113,6 +139,18 @@ class StateManager:
         self.base_path = base_path
         self.state_client = state_client_factory(base_path)
 
+    def has_existing_state(self, state_file_name: str) -> bool:
+        """
+        Checks for a pre-existing state file.
+
+        Args:
+        state_file_name (str): The name of the state file to load.
+
+        Returns:
+            bool: Boolean flag to indicate whether there is a pre-existing state file.
+        """
+        return Path(f"{self.base_path}/{state_file_name}").exists()
+
     def load(self, state_file_name: str) -> dict:
         """
         Load a state file.
@@ -123,7 +161,7 @@ class StateManager:
         Returns:
             dict: The contents of the state file.
         """
-        if not Path(f"{self.base_path}/{state_file_name}").exists():
+        if not self.has_existing_state(state_file_name):
             return {}
 
         with open(
