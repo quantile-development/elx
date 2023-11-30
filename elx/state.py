@@ -118,6 +118,18 @@ class LocalStateClient(StateClient):
     def params(self) -> dict:
         return {}
 
+    def has_existing_state(self, state_file_name: str) -> bool:
+        """
+        Checks for a pre-existing state file.
+
+        Args:
+        state_file_name (str): The name of the state file to load.
+
+        Returns:
+            bool: Boolean flag to indicate whether there is a pre-existing state file.
+        """
+        return Path(f"{self.base_path}/{state_file_name}").exists()
+
 
 def state_client_factory(base_path: str) -> StateClient:
     if base_path.startswith("s3://"):
@@ -139,18 +151,6 @@ class StateManager:
         self.base_path = base_path
         self.state_client = state_client_factory(base_path)
 
-    def has_existing_state(self, state_file_name: str) -> bool:
-        """
-        Checks for a pre-existing state file.
-
-        Args:
-        state_file_name (str): The name of the state file to load.
-
-        Returns:
-            bool: Boolean flag to indicate whether there is a pre-existing state file.
-        """
-        return Path(f"{self.base_path}/{state_file_name}").exists()
-
     def load(self, state_file_name: str) -> dict:
         """
         Load a state file.
@@ -161,7 +161,7 @@ class StateManager:
         Returns:
             dict: The contents of the state file.
         """
-        if not self.has_existing_state(state_file_name):
+        if not self.state_client.has_existing_state(state_file_name):
             return {}
 
         with open(
