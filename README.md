@@ -57,6 +57,39 @@ target = Target(
 )
 ```
 
+### De-selecting streams and properties
+
+You can modify the selected streams and properties of the tap by passing a `deselected` list to the Tap constructor. To deselect an entire stream, you specifiy the `<stream_name>`. To just deselect a stream property, specify the `<stream_name.property_name>`.
+
+```python
+from elx import Tap
+
+tap = Tap(
+  "tap-foo",
+  config={...},
+  deselected=[
+    "users", # deselects the entire `users` stream
+    "customers.name", # deselects the `name` property from the `customers` stream
+  ]
+)
+```
+
+### Replication keys
+
+To facilitate incremental loading, the Tap constructor allows you to include a `replication_keys` dictionary. This dictionary should contain key-value pairs representing the stream names and their respective replication keys.
+
+```python
+from elx import Tap
+
+tap = Tap(
+  "tap-foo",
+  config={...},
+  replication_keys={
+    "users": "updated_at", # sets `updated_at` column as replication key for `users` stream
+  }
+)
+```
+
 ### State
 
 By default, elx will store the state in the same directory as the script that is running. You can override this by passing a `StateManager` to the `Runner` constructor. Behind the scenes, elx uses [smart-open](https://github.com/RaRe-Technologies/smart_open) to be able to store the state in a variety of locations.
