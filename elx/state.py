@@ -31,6 +31,18 @@ class StateClient(ABC):
             "client": self.client,
         }
 
+    def has_existing_state(self, state_file_name: str) -> bool:
+        """
+        Checks for a pre-existing state file.
+
+        Args:
+        state_file_name (str): The name of the state file to load.
+
+        Returns:
+            bool: Boolean flag to indicate whether there is a pre-existing state file.
+        """
+        raise NotImplementedError
+
 
 class S3StateClient(StateClient):
     """
