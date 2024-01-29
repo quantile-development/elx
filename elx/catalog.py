@@ -193,3 +193,30 @@ class Catalog(BaseModel):
                 )
 
         return catalog
+
+    def add_custom_properties(self, properties: Optional[dict]) -> "Catalog":
+        """
+        Adds custom properties to stream schema and metadata.
+        """
+        # Make a copy of the existing catalog.
+        catalog = self.copy(deep=True)
+
+        # Loop over the streams
+        for stream in catalog.streams:
+            # If the stream is specified in `properties` dictionary
+            if stream.tap_stream_id in properties:
+                # Get the custom properties for the current stream
+                custom_properties = properties[stream.tap_stream_id]
+
+                # Loop over each custom property
+                for property_name, property_typing in custom_properties.items():
+                    # Add property to the stream schema with
+                    stream.stream_schema["properties"][property_name] = property_typing
+
+                    # Add property to metadata and mark as selected
+                    stream.upsert_metadata(
+                        breadcrumb=["properties", property_name],
+                        metadata={"selected": True},
+                    )
+
+        return catalog
