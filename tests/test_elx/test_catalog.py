@@ -159,3 +159,23 @@ def test_catalog_set_stream_replication_key(tap: Tap):
 
     assert catalog.streams[1].replication_method == "INCREMENTAL"
     assert catalog.streams[1].replication_key == "updated_at"
+
+
+def test_catalog_add_custom_property(tap: Tap):
+    """If we add a custom property, the catalog should be updated."""
+    schema = {
+        "users": {
+            "custom_property": {
+                "type": "string",
+            },
+        }
+    }
+
+    # Add a custom property to the tap schema
+    tap.schema = schema
+
+    # Verify that the custom property is in the catalog
+    assert (
+        tap.catalog.streams[1].find_metadata_by_breadcrumb(["properties", "users"])
+        != None
+    )
