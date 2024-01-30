@@ -194,7 +194,7 @@ class Catalog(BaseModel):
 
         return catalog
 
-    def add_custom_properties(self, properties: Optional[dict]) -> "Catalog":
+    def add_properties_to_schema(self, properties: Optional[dict]) -> "Catalog":
         """
         Adds custom properties to stream schema and metadata.
         """
