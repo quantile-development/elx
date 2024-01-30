@@ -106,10 +106,13 @@ class Tap(Singer):
 
         for stream in catalog.streams:
             print(stream.name)
+            print()
             print("metadata")
             print(stream.metadata)
             print("schema")
             print(stream.stream_schema)
+
+            print(catalog.dict(by_alias=True))
 
         with json_temp_file(self.config) as config_path:
             with json_temp_file(catalog.dict(by_alias=True)) as catalog_path:
