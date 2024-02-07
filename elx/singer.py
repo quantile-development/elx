@@ -13,6 +13,7 @@ from elx.exceptions import DecodeException, PipxInstallException
 from elx.utils import require_install, interpolate_in_config
 
 PYTHON = "python3"
+BUFFER_SIZE_LIMIT = 10485760
 
 
 class Singer:

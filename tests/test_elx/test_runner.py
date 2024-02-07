@@ -22,7 +22,7 @@ def test_config_interpolation_values(runner: Runner):
     """
     Make sure the tap and target names are correct.
     """
-    assert runner.interpolation_values["TAP_EXECUTABLE"] == "tap-smoke-test"
+    assert runner.interpolation_values["TAP_EXECUTABLE"] == "tap-mock-fixture"
     assert runner.interpolation_values["TARGET_EXECUTABLE"] == "target-jsonl"
 
 
@@ -39,4 +39,4 @@ def test_config_interpolation_target_values(tap: Tap):
 
     runner = Runner(tap, target)
 
-    assert runner.target.config["tap_name"] == "tap_smoke_test"
+    assert runner.target.config["tap_name"] == "tap_mock_fixture"

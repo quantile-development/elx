@@ -85,7 +85,12 @@ class Runner:
         streams: Optional[List[str]] = None,
         logger: logging.Logger = None,
     ) -> None:
-        asyncio.run(self.async_run(streams=streams, logger=logger))
+        asyncio.get_event_loop().run_until_complete(
+            self.async_run(
+                streams=streams,
+                logger=logger,
+            )
+        )
 
     async def async_run(
         self,
@@ -108,8 +113,13 @@ class Runner:
                 if self.logger:
                     self.logger.info(line)
 
-        async with self.tap.process(state=state, streams=streams) as tap_process:
-            async with self.target.process(tap_process=tap_process) as target_process:
+        async with self.tap.process(
+            state=state,
+            streams=streams,
+        ) as tap_process:
+            async with self.target.process(
+                tap_process=tap_process,
+            ) as target_process:
                 tap_outputs = [target_process.stdin]
                 tap_stdout_future = asyncio.ensure_future(
                     # forward subproc stdout to tap_outputs (i.e. targets stdin)
