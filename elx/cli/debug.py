@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.json import JSON
 from elx.runner import Runner
-from elx.cli.utils import load_variables_from_path, obfuscate_secrets
+from elx.cli.utils import obfuscate_secrets, find_instances_of_type
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 
 
@@ -38,17 +38,13 @@ def select_runner(runners: dict[str, Runner]) -> Runner:
     return runners[runner_name]
 
 
-def debug(path: Path):
+def debug(locator: str):
     """
     Debug an elx runner.
     """
-    variables = load_variables_from_path(path)
-
     # Get all the runners from the variables
     runners = {
-        runner.name: runner
-        for runner in variables.values()
-        if isinstance(runner, Runner)
+        runner.name: runner for runner in find_instances_of_type(locator, Runner)
     }
 
     runner = select_runner(runners)
@@ -92,7 +88,7 @@ def debug(path: Path):
     )
     table.add_row(
         "Streams",
-        ", ".join([stream.name for stream in runner.tap.streams]),
+        ", ".join([stream.name for stream in runner.tap.catalog.streams]),
     )
     table.add_row(
         "Tap config",
@@ -107,19 +103,19 @@ def debug(path: Path):
 
     # runner.tap.invoke()
 
-    with Progress(
-        "[progress.description]{task.description}",
-        BarColumn(),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        TextColumn("[bold blue]{task.fields[stream]}"),
-        # TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task(
-            "Testing tap streams",
-            stream="stream",
-            total=len(runner.tap.streams),
-        )
+    # with Progress(
+    #     "[progress.description]{task.description}",
+    #     BarColumn(),
+    #     "[progress.percentage]{task.percentage:>3.0f}%",
+    #     TextColumn("[bold blue]{task.fields[stream]}"),
+    #     # TimeElapsedColumn(),
+    # ) as progress:
+    #     task = progress.add_task(
+    #         "Testing tap streams",
+    #         stream="stream",
+    #         total=len(runner.tap.streams),
+    #     )
 
-        for stream in runner.tap.streams:
-            progress.update(task, advance=1, stream=stream.name)
-            runner.tap.invoke([stream.name], limit=2, debug=False)
+    #     for stream in runner.tap.streams:
+    #         progress.update(task, advance=1, stream=stream.name)
+    #         runner.tap.invoke([stream.name], limit=2, debug=False)

@@ -1,14 +1,18 @@
 from pathlib import Path
 import typer
 from rich import print
+
 from elx.cli import debug
-from elx.cli import invoke
+
+# from elx.cli import invoke
+from elx.cli import catalog
 from dotenv import load_dotenv, dotenv_values
 
 app = typer.Typer()
 
 app.command()(debug.debug)
-app.command()(invoke.invoke)
+# app.command()(invoke.invoke)
+app.command()(catalog.catalog)
 
 
 def cli():

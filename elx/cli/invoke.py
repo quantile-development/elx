@@ -2,11 +2,11 @@ import inquirer
 import typer
 from pathlib import Path
 from elx.tap import Tap
-from elx.cli.utils import load_variables_from_path
+from elx.cli.utils import find_instances_of_type
 
 
 def invoke(
-    path: Path,
+    locator: Path,
     limit: int = typer.Option(3, help="Limit the number of records to ingest"),
 ):
     """
@@ -15,10 +15,8 @@ def invoke(
     Args:
         path (str): The path to the target or tap.
     """
-    variables = load_variables_from_path(Path.cwd() / path)
-
     # Get all instances from foo that are of type Tap
-    taps = {tap.executable: tap for tap in variables.values() if isinstance(tap, Tap)}
+    taps = {tap.executable: tap for tap in find_instances_of_type(locator, Tap)}
 
     questions = [
         inquirer.List(
