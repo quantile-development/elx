@@ -172,7 +172,7 @@ def test_catalog_add_custom_property(tap: Tap):
     }
 
     # Add a custom property to the tap schema
-    tap.custom_properties = custom_properties
+    tap.schema = custom_properties
 
     # Verify that the custom property is in the metadata of the catalog
     assert (
@@ -184,3 +184,31 @@ def test_catalog_add_custom_property(tap: Tap):
 
     # Verify that the custom property is in the schema of the catalog
     assert "custom_property" in tap.catalog.streams[1].stream_schema["properties"]
+
+
+def test_catalog_add_nested_custom_property(tap: Tap):
+    """If we add a custom property, the catalog should be updated."""
+    custom_properties = {
+        "users": {
+            "items": {
+                "properties": {
+                    "custom_property": {
+                        "type": "string",
+                    },
+                },
+                "type": "object",
+            }
+        }
+    }
+
+    # Add a custom property to the tap schema
+    tap.schema = custom_properties
+
+    # Verify that the custom property is in the metadata of the catalog
+    assert (
+        tap.catalog.streams[1].find_metadata_by_breadcrumb(["properties", "items"])
+        != None
+    )
+
+    # Verify that the custom property is in the schema of the catalog
+    assert "items" in tap.catalog.streams[1].stream_schema["properties"]
