@@ -53,7 +53,7 @@ class Tap(Singer):
             catalog = catalog.set_replication_keys(
                 replication_keys=self.replication_keys
             )
-            catalog = catalog.add_properties_to_schema(properties=self.schema)
+            catalog = catalog.add_properties_to_schema(custom_schema=self.schema)
             return catalog
 
     @contextlib.asynccontextmanager
