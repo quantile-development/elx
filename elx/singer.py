@@ -47,6 +47,13 @@ class Singer:
 
         return config
 
+    @property
+    def name(self) -> str:
+        """
+        Get the name of the plugin.
+        """
+        return self.executable
+
     @cached_property
     def executable(self) -> str:
         """
