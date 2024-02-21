@@ -32,6 +32,9 @@ jobs:
           cache: "pip"
           cache-dependency-path: "poetry.lock"
 
+      - name: Set Poetry Python version
+        run: poetry env use ${{ matrix.python }}
+
       - name: Install Poetry
         run: pipx install poetry
 
