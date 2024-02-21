@@ -6,6 +6,7 @@ on:
       - "elx/**"
       - "tests/**"
       - "poetry.lock"
+      - ".github/workflows/test.yaml"
 
 jobs:
   test:
@@ -33,7 +34,10 @@ jobs:
           cache-dependency-path: "poetry.lock"
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pip install poetry
+
+      - name: Set Poetry Python version
+        run: poetry env use ${{ matrix.python }}
 
       - name: Install Dependencies
         run: poetry install -E all
