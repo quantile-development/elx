@@ -18,10 +18,12 @@ class Tap(Singer):
         config: dict = {},
         deselected: List[str] = None,
         replication_keys: dict = {},
+        schema: dict = {},
     ):
         super().__init__(spec, executable, config)
         self.deselected = deselected
         self.replication_keys = replication_keys
+        self.schema = schema
 
     def discover(self, config_path: Path) -> dict:
         """
@@ -51,6 +53,7 @@ class Tap(Singer):
             catalog = catalog.set_replication_keys(
                 replication_keys=self.replication_keys
             )
+            catalog = catalog.add_properties_to_schema(custom_schema=self.schema)
             return catalog
 
     @contextlib.asynccontextmanager

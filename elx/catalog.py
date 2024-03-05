@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field
+import logging
 
 
 class Stream(BaseModel):
@@ -190,6 +191,42 @@ class Catalog(BaseModel):
                 stream.upsert_metadata(
                     breadcrumb=["properties", replication_key],
                     metadata={"inclusion": "automatic"},
+                )
+
+        return catalog
+
+    def add_properties_to_schema(self, custom_schema: Optional[dict]) -> "Catalog":
+        """
+        Adds custom properties to stream schema and metadata.
+        """
+        # Make a copy of the existing catalog.
+        catalog = self.copy(deep=True)
+
+        # Loop over the streams referenced in the `custom_schema`
+        for stream_name in custom_schema.keys():
+            # Find the stream
+            stream = catalog.find_stream(stream_name)
+
+            # If the stream is not found, skip it
+            if stream is None:
+                # Log warning about an invalid stream name in the schema configuration
+                logging.warning(
+                    f"Found stream `{stream_name}` in the `schema` definition that does not exist in the catalog."
+                )
+                continue
+
+            # Get the custom properties for the current stream
+            custom_properties = custom_schema[stream.tap_stream_id]
+
+            # Loop over each custom property
+            for property_name, property_typing in custom_properties.items():
+                # Add property to the stream schema with
+                stream.stream_schema["properties"][property_name] = property_typing
+
+                # Add property to metadata and mark as selected
+                stream.upsert_metadata(
+                    breadcrumb=["properties", property_name],
+                    metadata={"selected": True},
                 )
 
         return catalog

@@ -3,7 +3,7 @@ import pytest
 from elx import Tap
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def tap() -> Generator[Tap, None, None]:
     """
     Return a Tap instance for the  executable with an incremental stream.
