@@ -1,4 +1,4 @@
-from typing import Generator, List
+from typing import Generator, Iterable, List, Sequence
 from elx import Runner
 from dagster import (
     AssetsDefinition,
@@ -7,6 +7,9 @@ from dagster import (
     Output,
     multi_asset,
     AssetOut,
+    SourceAsset,
+    AssetKey,
+    AssetDep,
     get_dagster_logger,
 )
 from elx.extensions.dagster.utils import dagster_safe_name, generate_description
@@ -14,7 +17,10 @@ from elx.extensions.dagster.utils import dagster_safe_name, generate_description
 logger = get_dagster_logger()
 
 
-def load_assets(runner: Runner) -> List[AssetsDefinition]:
+def load_assets(
+    runner: Runner,
+    deps: Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None = None,
+) -> List[AssetsDefinition]:
     """
     Load the assets for a runner, each asset represents one tap target combination.
 
@@ -67,6 +73,7 @@ def load_assets(runner: Runner) -> List[AssetsDefinition]:
     return [
         multi_asset(
             name=f"run_{dagster_safe_name(runner.tap.executable)}_{dagster_safe_name(runner.target.executable)}",
+            deps=deps,
             outs={
                 dagster_safe_name(stream.name): AssetOut(
                     is_required=False,
