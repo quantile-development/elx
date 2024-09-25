@@ -35,6 +35,9 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
+      - name: Lock dependencies
+        run: poetry lock --no-update
+
       - name: Install Dependencies
         run: poetry install -E all
 
