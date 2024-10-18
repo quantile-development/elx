@@ -4,11 +4,8 @@ import subprocess
 import hashlib
 from distutils.spawn import find_executable
 from functools import cached_property
-from typing import Generator, Optional
-from pipx.commands.install import install
-from pipx.commands.uninstall import uninstall
+from typing import Optional
 from pipx.commands.common import package_name_from_spec
-from pipx.constants import LOCAL_BIN_DIR
 from elx.exceptions import DecodeException, PipxInstallException
 from elx.utils import require_install, interpolate_in_config
 
