@@ -4,3 +4,5 @@ __pycache__/
 tap-*.json
 tmp*
 .ignore/
+.idea
+.venv

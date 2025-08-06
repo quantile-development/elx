@@ -20,12 +20,17 @@ logger = get_dagster_logger()
 def load_assets(
     runner: Runner,
     deps: Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None = None,
+    key_prefix: str | Sequence[str] | None = None,
+    group_name: str | None = None,
 ) -> List[AssetsDefinition]:
     """
     Load the assets for a runner, each asset represents one tap target combination.
 
     Args:
         runner (Runner): The runner to extract from.
+        deps (Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None): Upstream assets upon which the assets depend.
+        key_prefix (str | Sequence[str] | None): Key prefix for the assets. If not provided, defaults to the tap executable name.
+        group_name (str | None): Group name for the assets. If not provided, defaults to the tap executable name.
 
     Returns:
         List[AssetsDefinition]: The assets.
@@ -78,14 +83,14 @@ def load_assets(
                 dagster_safe_name(stream.name): AssetOut(
                     is_required=False,
                     description=generate_description(runner=runner, stream=stream),
-                    key_prefix=dagster_safe_name(runner.tap.executable),
+                    key_prefix=key_prefix or dagster_safe_name(runner.tap.executable),
                     code_version=runner.tap.hash_key,
                 )
                 for stream in runner.tap.catalog.streams
                 if stream.is_selected
             },
             can_subset=True,
-            group_name=dagster_safe_name(runner.tap.executable),
+            group_name=group_name or dagster_safe_name(runner.tap.executable),
             compute_kind="python",
         )(run_factory(runner))
     ]
