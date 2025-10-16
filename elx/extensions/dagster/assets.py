@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Generator, Iterable, List, Sequence
 from elx import Runner
 from dagster import (
