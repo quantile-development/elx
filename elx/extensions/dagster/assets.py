@@ -83,7 +83,7 @@ def load_assets(
             name=f"run_{dagster_safe_name(runner.tap.executable)}_{dagster_safe_name(runner.target.executable)}",
             deps=deps,
             outs={
-                dagster_safe_name(stream.table_name or stream.name): AssetOut(
+                dagster_safe_name(stream.name): AssetOut(
                     is_required=False,
                     description=generate_description(runner=runner, stream=stream),
                     key_prefix=key_prefix,
