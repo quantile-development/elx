@@ -57,6 +57,13 @@ def load_assets(
             Yields:
                 Generator[Output, None, None]: The names of the selected outputs.
             """
+            # Build a mapping from dagster-safe names back to original stream names
+            stream_name_mapping = {
+                dagster_safe_name(stream.name): stream.name
+                for stream in runner.tap.catalog.streams
+                if stream.is_selected
+            }
+
             # Execute the runner and yield the selected outputs.
             runner.run(
                 streams=list(context.selected_output_names),
@@ -64,12 +71,19 @@ def load_assets(
             )
 
             for context_output_name in context.selected_output_names:
+                # Get the original stream name to look up the row count
+                original_stream_name = stream_name_mapping.get(
+                    context_output_name, context_output_name
+                )
+                row_count = runner.record_counts.get(original_stream_name, 0)
+
                 yield Output(
                     value=Nothing,
                     output_name=context_output_name,
                     metadata={
                         "state_path": f"{runner.state_manager.base_path}/{runner.state_file_name}",
                         "state": runner.load_state(),
+                        "row_count": row_count,
                     },
                 )
 
