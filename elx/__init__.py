@@ -8,6 +8,7 @@ from elx.tap import Tap
 from elx.target import Target
 from elx.runner import Runner
 from elx.catalog import Catalog
+from elx.record_counter import RecordCounter
 
 logger = logging.getLogger("pipx")
 logger.setLevel(logging.CRITICAL)

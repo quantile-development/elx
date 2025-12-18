@@ -12,9 +12,10 @@ from functools import cached_property
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
+from elx.record_counter import RecordCounter
 from dotenv import load_dotenv
 
-from elx.utils import capture_subprocess_output, RecordCounter
+from elx.utils import capture_subprocess_output
 
 logging.basicConfig(level=logging.INFO)
 

@@ -1,4 +1,5 @@
-from elx.utils import interpolate_in_config, RecordCounter
+from elx import RecordCounter
+from elx.utils import interpolate_in_config
 
 
 def test_interpolate_in_config():
