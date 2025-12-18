@@ -1,5 +1,4 @@
-from collections.abc import Mapping
-from typing import Generator, Iterable, List, Sequence
+from typing import Generator, Iterable, List, Mapping, Sequence
 from elx import Runner
 from dagster import (
     AssetsDefinition,
@@ -23,7 +22,6 @@ def load_assets(
     deps: Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None = None,
     key_prefix: str | Sequence[str] | None = None,
     group_name: str | None = None,
-    tags: Mapping[str, str] | None = None,
 ) -> List[AssetsDefinition]:
     """
     Load the assets for a runner, each asset represents one tap target combination.
@@ -33,7 +31,7 @@ def load_assets(
         deps (Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None): Upstream assets upon which the assets depend.
         key_prefix (str | Sequence[str] | None): Key prefix for the assets. If not provided, defaults to the tap executable name.
         group_name (str | None): Group name for the assets. If not provided, defaults to the tap executable name.
-        tags (Mapping[str, str]  | None): Tags for filtering and organizing. These tags are not attached to runs of the asset.
+        tags (Mapping[str, str] | None): Tags to apply to all assets.
 
     Returns:
         List[AssetsDefinition]: The assets.
@@ -100,9 +98,8 @@ def load_assets(
                 dagster_safe_name(stream.name): AssetOut(
                     is_required=False,
                     description=generate_description(runner=runner, stream=stream),
-                    key_prefix=key_prefix,
+                    key_prefix=key_prefix or dagster_safe_name(runner.tap.executable),
                     code_version=runner.tap.hash_key,
-                    tags=tags,
                 )
                 for stream in runner.tap.catalog.streams
                 if stream.is_selected
