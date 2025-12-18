@@ -12,6 +12,7 @@ from functools import cached_property
 from elx.tap import Tap
 from elx.target import Target
 from elx import StateManager
+from elx.record_counter import RecordCounter
 from dotenv import load_dotenv
 
 from elx.utils import capture_subprocess_output
@@ -30,6 +31,7 @@ class Runner:
         self.tap = tap
         self.target = target
         self.state_manager = state_manager
+        self.record_counts: dict[str, int] = {}
 
     @property
     def name(self) -> str:
@@ -113,6 +115,9 @@ class Runner:
                 if self.logger:
                     self.logger.info(line)
 
+        # Create a record counter to track row counts per stream
+        record_counter = RecordCounter()
+
         async with self.tap.process(
             state=state,
             streams=streams,
@@ -120,7 +125,7 @@ class Runner:
             async with self.target.process(
                 tap_process=tap_process,
             ) as target_process:
-                tap_outputs = [target_process.stdin]
+                tap_outputs = [target_process.stdin, record_counter]
                 tap_stdout_future = asyncio.ensure_future(
                     # forward subproc stdout to tap_outputs (i.e. targets stdin)
                     capture_subprocess_output(tap_process.stdout, *tap_outputs),
@@ -238,6 +243,9 @@ class Runner:
                     raise Exception("Tap failed")
                 elif target_code:
                     raise Exception("Target failed")
+
+                # Store the record counts for access after the run
+                self.record_counts = record_counter.counts
 
 
 if __name__ == "__main__":
