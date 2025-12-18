@@ -31,7 +31,6 @@ def load_assets(
         deps (Iterable[AssetKey | str | Sequence[str] | AssetsDefinition | SourceAsset | AssetDep] | None): Upstream assets upon which the assets depend.
         key_prefix (str | Sequence[str] | None): Key prefix for the assets. If not provided, defaults to the tap executable name.
         group_name (str | None): Group name for the assets. If not provided, defaults to the tap executable name.
-        tags (Mapping[str, str] | None): Tags to apply to all assets.
 
     Returns:
         List[AssetsDefinition]: The assets.
