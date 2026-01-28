@@ -74,6 +74,7 @@ class Runner:
 
         return {
             "NOW": NOW.isoformat(),
+            "TODAY": NOW.strftime("%Y-%m-%d"),
             "YESTERDAY": (NOW - datetime.timedelta(days=1)).isoformat(),
             "LAST_WEEK": (NOW - datetime.timedelta(days=7)).isoformat(),
             "TAP_EXECUTABLE": self.tap.executable,
