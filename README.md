@@ -133,6 +133,7 @@ Supported variables:
 | Variable            | Example                      |
 | ------------------- | ---------------------------- |
 | `NOW`               | `2023-08-17T11:06:54.233086` |
+| `TODAY`             | `2023-08-17`                 |
 | `YESTERDAY`         | `2023-08-16T11:06:54.233086` |
 | `LAST_WEEK`         | `2023-08-10T11:06:54.233086` |
 | `TAP_EXECUTABLE`    | `tap-smoke-test`             |
