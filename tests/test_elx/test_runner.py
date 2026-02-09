@@ -40,3 +40,23 @@ def test_config_interpolation_target_values(tap: Tap):
     runner = Runner(tap, target)
 
     assert runner.target.config["tap_name"] == "tap_mock_fixture"
+
+
+def test_record_counts(runner: Runner):
+    """
+    Test that record counts are tracked per stream after a run.
+    """
+    # Run the extract-load pipeline
+    runner.run()
+
+    # Assert that record_counts is populated
+    assert runner.record_counts is not None
+    assert isinstance(runner.record_counts, dict)
+
+    # Assert that at least one stream has records
+    assert len(runner.record_counts) > 0
+
+    # Assert all counts are positive integers
+    for stream_name, count in runner.record_counts.items():
+        assert isinstance(count, int)
+        assert count > 0

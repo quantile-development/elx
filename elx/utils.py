@@ -1,6 +1,5 @@
 import asyncio
 
-
 def require_install(func):
     """
     Decorator to check if the executable is installed.
