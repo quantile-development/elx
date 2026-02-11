@@ -133,6 +133,13 @@ class Catalog(BaseModel):
                 },
             )
 
+            # If deselecting an entire stream (not a property), also update
+            # schema.selected to stay consistent with metadata. This is needed
+            # because singer-python's is_selected() short-circuits on
+            # schema.selected before checking metadata.
+            if not breadcrumb:
+                stream.stream_schema["selected"] = False
+
         return catalog
 
     def select(self, streams: Optional[List[str]]) -> "Catalog":
@@ -157,6 +164,11 @@ class Catalog(BaseModel):
                     "selected": is_selected,
                 },
             )
+
+            # Also update schema.selected to stay consistent with metadata.
+            # This is needed because singer-python's is_selected() short-circuits
+            # on schema.selected before checking metadata.
+            stream.stream_schema["selected"] = is_selected
 
         return catalog
 
