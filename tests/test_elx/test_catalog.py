@@ -12,6 +12,7 @@ DEFAULT_CATALOG = {
             "is_view": False,
             "table_name": None,
             "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "properties": {
                     "id": {"type": ["integer", "null"]},
                     "animal_name": {"type": ["string", "null"]},
@@ -51,6 +52,7 @@ DEFAULT_CATALOG = {
             "table_name": None,
             "key_properties": ["id"],
             "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "properties": {
                     "id": {"type": ["integer", "null"]},
                     "name": {"type": ["string", "null"]},
@@ -212,3 +214,115 @@ def test_catalog_add_nested_custom_property(tap: Tap):
 
     # Verify that the custom property is in the schema of the catalog
     assert "items" in tap.catalog.streams[1].stream_schema["properties"]
+
+
+def test_select_updates_schema_selected():
+    """
+    When select() marks a stream as not selected, it should also set
+    schema.selected = False so that singer-python's is_selected()
+    (which short-circuits on schema.selected) respects the selection.
+    """
+    catalog = Catalog(
+        **{
+            "streams": [
+                {
+                    "tap_stream_id": "stream_a",
+                    "key_properties": [],
+                    "schema": {"type": "object", "properties": {}, "selected": True},
+                    "metadata": [],
+                },
+                {
+                    "tap_stream_id": "stream_b",
+                    "key_properties": [],
+                    "schema": {"type": "object", "properties": {}, "selected": True},
+                    "metadata": [],
+                },
+            ]
+        }
+    )
+
+    # Select only stream_a
+    result = catalog.select(["stream_a"])
+
+    # stream_a should remain selected in both metadata and schema
+    assert result.streams[0].is_selected == True
+    assert result.streams[0].stream_schema.get("selected") == True
+
+    # stream_b should be deselected in both metadata and schema
+    assert result.streams[1].is_selected == False
+    assert result.streams[1].stream_schema.get("selected") == False
+
+
+def test_deselect_updates_schema_selected():
+    """
+    When deselect() marks an entire stream as not selected, it should also
+    set schema.selected = False in the schema dict.
+    """
+    catalog = Catalog(
+        **{
+            "streams": [
+                {
+                    "tap_stream_id": "my_stream",
+                    "key_properties": [],
+                    "schema": {"type": "object", "properties": {"col": {"type": "string"}}, "selected": True},
+                    "metadata": [],
+                },
+            ]
+        }
+    )
+
+    result = catalog.deselect(["my_stream"])
+
+    # The stream should be deselected in both metadata and schema
+    assert result.streams[0].is_selected == False
+    assert result.streams[0].stream_schema.get("selected") == False
+
+
+def test_deselect_property_does_not_change_schema_selected():
+    """
+    When deselect() targets a property (not the whole stream), it should NOT
+    change schema.selected on the stream itself.
+    """
+    catalog = Catalog(
+        **{
+            "streams": [
+                {
+                    "tap_stream_id": "my_stream",
+                    "key_properties": [],
+                    "schema": {"type": "object", "properties": {"col": {"type": "string"}}, "selected": True},
+                    "metadata": [],
+                },
+            ]
+        }
+    )
+
+    result = catalog.deselect(["my_stream.col"])
+
+    # The stream-level schema.selected should remain True
+    assert result.streams[0].stream_schema.get("selected") == True
+
+    # But the property metadata should be deselected
+    prop_meta = result.streams[0].find_metadata_by_breadcrumb(["properties", "col"])
+    assert prop_meta["selected"] == False
+
+
+def test_select_none_returns_unchanged_catalog():
+    """
+    select(None) should return the catalog unchanged, without touching
+    schema.selected.
+    """
+    catalog = Catalog(
+        **{
+            "streams": [
+                {
+                    "tap_stream_id": "stream_a",
+                    "key_properties": [],
+                    "schema": {"type": "object", "properties": {}, "selected": True},
+                    "metadata": [],
+                },
+            ]
+        }
+    )
+
+    result = catalog.select(None)
+    assert result.streams[0].stream_schema.get("selected") == True
