@@ -12,6 +12,7 @@ DEFAULT_CATALOG = {
             "is_view": False,
             "table_name": None,
             "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "properties": {
                     "id": {"type": ["integer", "null"]},
                     "animal_name": {"type": ["string", "null"]},
@@ -51,6 +52,7 @@ DEFAULT_CATALOG = {
             "table_name": None,
             "key_properties": ["id"],
             "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "properties": {
                     "id": {"type": ["integer", "null"]},
                     "name": {"type": ["string", "null"]},
