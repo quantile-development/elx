@@ -155,13 +155,13 @@ def state_client_factory(base_path: str) -> StateClient:
 
 
 class StateManager:
-    def __init__(self, base_path: str = ".") -> None:
+    def __init__(self, base_path: str = ".", state_client: StateClient | None = None) -> None:
         """
         Args:
             base_path (str): The base path to store state files in. Defaults to "./state".
         """
         self.base_path = base_path
-        self.state_client = state_client_factory(base_path)
+        self.state_client = state_client or state_client_factory(base_path)
 
     def load(self, state_file_name: str) -> dict:
         """
