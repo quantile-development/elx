@@ -9,7 +9,7 @@ class Stream(BaseModel):
     table_name: Optional[str] = None
     replication_method: Optional[str] = "FULL_TABLE"
     replication_key: Optional[str] = None
-    key_properties: List[str]
+    key_properties: List[str] = Field(default_factory=list)
     stream_schema: dict = Field(alias="schema")
     is_view: Optional[bool] = False
     metadata: List[dict] = Field(default_factory=list)
