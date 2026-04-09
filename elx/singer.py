@@ -2,7 +2,7 @@ import json
 import logging
 import subprocess
 import hashlib
-from distutils.spawn import find_executable
+from shutil import which
 from functools import cached_property
 from typing import Optional
 from pipx.commands.common import package_name_from_spec
@@ -89,7 +89,7 @@ class Singer:
         Returns:
             bool: True if the executable is installed, False otherwise.
         """
-        return find_executable(self.executable) is not None
+        return which(self.executable) is not None
 
     def install(self) -> None:
         """
